@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جرد وتعديل مخزون دكان غسق</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .table-container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
+        th { background-color: #2c3e50; color: white; }
+        .input-inline { width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .btn-sm { padding: 6px 12px; font-size: 14px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-sm:hover { background: #218838; }
+        .search-box { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #007bff; border-radius: 4px; margin-bottom: 15px; box-sizing: border-box; }
+        .highlight { background-color: #fff3cd !important; border: 2px solid #ffc107; }
+    </style>
+</head>
+<body>
+
+<div class="table-container">
+    <h2>📋 شاشة الجرد السريع وتحديث كميات بضاعة الدكان</h2>
+    <p>امسح باركود أي مادة للانتقال إليها مباشرة وتعديل مخزونها اللحظي في السحاب:</p>
+    
+    <input type="text" id="inventoryScanner" class="search-box" placeholder="امسح الباركود هنا للقفز السريع للصنف بالجدول..." autofocus>
+    
+    <table id="inventoryTable">
+        <thead>
+            <tr>
+                <th>اسم المنتج</th>
+                <th>موقع الرف</th>
+                <th>المخزون الحالي (بالحبة)</th>
+                <th>إدخل المخزون الجديد بالكامل</th>
+                <th>إجراء</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="5" style="text-align:center;">جاري جلب البضاعة الحالية...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
+        authDomain: "shop-pos-firebase.firebaseapp.com",
+        projectId: "shop-pos-firebase",
+        storageBucket: "shop-pos-firebase.firebasestorage.app",
+        messagingSenderId: "970725406691",
+        appId: "1:970725406691:web:a1f769d0f11357423c52d6",
+        measurementId: "G-KR4RSBW9D5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let itemsList = [];
+
+    async function loadInventory() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "products"));
+            const tbody = document.querySelector('#inventoryTable tbody');
+            tbody.innerHTML = ''; itemsList = [];
+
+            querySnapshot.forEach((docSnap) => {
+                const p = docSnap.data(); const id = docSnap.id;
+                itemsList.push({ id, ...p });
+                
+                tbody.innerHTML += `
+                    <tr id="row-${id}">
+                        <td><b>${p.product_name}</b></td>
+                        <td><span style="color:#007bff; font-weight:bold;">${p.shelf_number || 'غير محدد'}</span></td>
+                        <td>${p.current_stock_pieces} حبة</td>
+                        <td><input type="number" id="input-${id}" class="input-inline" placeholder="مثال: 500"></td>
+                        <td><button class="btn-sm" onclick="window.updateStock('${id}', '${p.product_name}')">تحديث المخزن</button></td>
+                    </tr>
+                `;
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    // ميزة القفز والتحديد السريع عبر باركود الحبة أو الكرتون
+    document.getElementById('inventoryScanner').addEventListener('keydown', function(e) {
+        if(e.key === 'Enter') {
+            const code = this.value.trim(); this.value = '';
+            if(!code) return;
+            
+            let matched = itemsList.find(p => p.barcode_piece === code || p.barcode_box === code);
+            if(matched) {
+                // إزالة التظليل السابق
+                document.querySelectorAll('tr').forEach(r => r.classList.remove('highlight'));
+                // التوجه والتركيز على العنصر الممسوح
+                let targetRow = document.getElementById(`row-${matched.id}`);
+                targetRow.classList.add('highlight');
+                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.getElementById(`input-${matched.id}`).focus();
+            } else { alert('هذا الباركود غير مسجل بأي صنف!'); }
+        }
+    });
+
+    window.updateStock = async (id, name) => {
+        const val = document.getElementById(`input-${id}`).value;
+        if(!val) return alert("الرجاء إدخال قيمة للتحديث أولاً!");
+        
+        try {
+            const productRef = doc(db, "products", id);
+            await updateDoc(productRef, { current_stock_pieces: parseInt(val) });
+            alert(`تم تحديث مخزون (${name}) إلى ${val} حبة بنجاح!`);
+            loadInventory();
+        } catch(e) { alert("حدث خطأ أثناء التحديث."); }
+    };
+
+    loadInventory();
+</script>
+</body>
+</html>
