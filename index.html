@@ -3,42 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام كاشير الدكان الذكي - متصل بالسحابة</title>
+    <title>نظام كاشير الدكان الذكي - النسخة الشاملة</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; }
-        .pos-section { flex: 2; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .cart-section { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
+        .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; }
+        .pos-section { flex: 2; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .cart-section { flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
         h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
         th { background-color: #2c3e50; color: white; }
         .btn { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
         .btn:hover { background: #218838; }
         .btn-danger { background: #dc3545; }
-        .status-bar { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        .btn-primary { background: #007bff; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .status-bar { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; flex-wrap: wrap; }
         .online { color: #28a745; }
         .offline { color: #dc3545; }
         .summary { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 20px; font-size: 18px; }
         .total-price { font-size: 24px; font-weight: bold; color: #d9534f; }
+        #scanner-container { width: 100%; max-width: 400px; display: none; margin: 10px 0; border: 2px dashed #007bff; }
+        
+        /* تنسيق الفاتورة المخصصة للطباعة */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; }
+        }
+        #printArea { display: none; background: #fff; padding: 15px; border: 1px dashed #000; width: 280px; font-size: 14px; text-align: center; margin-top: 15px; border-radius: 4px; }
     </style>
+    <script src="https://unpkg.com/@html5-qrcode/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
 <div class="status-bar">
     <div>حالة الشبكة للتزامن: <span id="networkStatus" class="online">جاري التحميل...</span></div>
-    <div>مستودع دكان غسق الذكي - شاشة الكاشير</div>
+    <div>مستودع دكان غسق الذكي - شاشة الكاشير المطور الشامل</div>
 </div>
 
 <div class="container">
     <div class="pos-section">
         <h2>شاشة البيع السريع (الكاشير)</h2>
+        
+        <div class="form-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label for="barcodeInput">امسح باركود المادة (حبة أو كرتون):</label>
+                <input type="text" id="barcodeInput" placeholder="ضع المؤشر هنا وامسح الباركود..." autofocus>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn btn-primary" id="toggleScannerBtn" style="height: 45px;">📷 تشغيل كاميرا الهاتف</button>
+            </div>
+        </div>
+
+        <div id="scanner-container">
+            <div id="interactive" style="width: 100%;"></div>
+        </div>
+
         <div class="form-group">
-            <label for="barcodeInput">امسح باركود المادة (حبة أو كرتون):</label>
-            <input type="text" id="barcodeInput" placeholder="ضع المؤشر هنا وامسح الباركود..." autofocus>
+            <label for="searchInput">أو ابحث باسم المنتج سريعاً (في حال تلف الباركود):</label>
+            <input type="text" id="searchInput" placeholder="اكتب اسم المنتج هنا للبحث السريع...">
+            <div id="searchResults" style="background: white; border: 1px solid #ccc; display: none; max-height: 150px; overflow-y: auto;"></div>
         </div>
 
         <h3>الفاتورة الحالية</h3>
@@ -67,25 +95,18 @@
             </div>
         </div>
         <button class="btn" style="width: 100%; padding: 15px; font-size: 18px;" onclick="checkoutInvoice()">تأكيد وقطع الفاتورة</button>
+        
+        <!-- منطقة الفاتورة المخفية المجهزة للطباعة والمشاركة -->
+        <div id="printArea"></div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { 
-        getFirestore, 
-        collection, 
-        getDocs, 
-        addDoc, 
-        doc, 
-        updateDoc, 
-        increment,
-        initializeFirestore,
-        persistentLocalCache,
-        persistentMultipleTabManager
+        getFirestore, collection, getDocs, addDoc, doc, updateDoc, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // تم دمج بيانات مشروعك الحقيقية هنا بنجاح ✅
     const firebaseConfig = {
         apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
         authDomain: "shop-pos-firebase.firebaseapp.com",
@@ -103,6 +124,19 @@
 
     let productsDb = [];
     let cart = [];
+    let html5QrcodeScanner = null;
+
+    function playBeep() {
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            osc.type = "sine";
+            osc.frequency.value = 800;
+            osc.connect(context.destination);
+            osc.start();
+            setTimeout(() => osc.stop(), 100);
+        } catch(e){}
+    }
 
     const updateNetworkStatus = () => {
         const statusEl = document.getElementById('networkStatus');
@@ -125,63 +159,78 @@
             querySnapshot.forEach((doc) => {
                 productsDb.push({ id: doc.id, ...doc.data() });
             });
-            console.log("تم تحديث المنتجات.", productsDb);
-        } catch (error) {
-            console.error("خطأ في تحميل المنتجات:", error);
-        }
+        } catch (error) { console.error(error); }
     }
     loadProducts();
+
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        if(!query) { searchResults.style.display = 'none'; return; }
+        
+        const filtered = productsDb.filter(p => p.product_name.toLowerCase().includes(query));
+        searchResults.innerHTML = '';
+        if(filtered.length > 0) {
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.style.padding = '10px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
+                div.innerHTML = `📦 <b>${p.product_name}</b> - حبة: ${p.sale_price_piece} ر.س | كرتون: ${p.sale_price_box} ر.س`;
+                div.onclick = () => {
+                    addToCart(p, 'piece');
+                    searchInput.value = ''; searchResults.style.display = 'none';
+                };
+                searchResults.appendChild(div);
+            });
+            searchResults.style.display = 'block';
+        } else { searchResults.style.display = 'none'; }
+    });
 
     const barcodeInput = document.getElementById('barcodeInput');
     barcodeInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             const barcode = this.value.trim();
-            if(barcode) {
-                handleBarcodeScan(barcode);
-                this.value = '';
-            }
+            if(barcode) { handleBarcodeScan(barcode); this.value = ''; }
         }
     });
 
     function handleBarcodeScan(barcode) {
         let product = productsDb.find(p => p.barcode_piece === barcode);
         let unit = 'piece';
+        if (!product) { product = productsDb.find(p => p.barcode_box === barcode); unit = 'box'; }
 
-        if (!product) {
-            product = productsDb.find(p => p.barcode_box === barcode);
-            unit = 'box';
-        }
-
-        if (product) {
-            addToCart(product, unit);
-        } else {
-            alert('هذا الباركود غير مسجل في النظام!');
-        }
+        if (product) { playBeep(); addToCart(product, unit); } 
+        else { alert('هذا الباركود غير مسجل في النظام!'); }
     }
+
+    const toggleScannerBtn = document.getElementById('toggleScannerBtn');
+    toggleScannerBtn.addEventListener('click', () => {
+        const container = document.getElementById('scanner-container');
+        if(container.style.display === 'block') {
+            container.style.display = 'none';
+            if(html5QrcodeScanner) html5QrcodeScanner.clear();
+        } else {
+            container.style.display = 'block';
+            html5QrcodeScanner = new Html5QrcodeScanner("interactive", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render((text) => { handleBarcodeScan(text); });
+        }
+    });
 
     function addToCart(product, unit) {
         const cartIndex = cart.findIndex(item => item.product.id === product.id && item.unit === unit);
         const price = unit === 'piece' ? product.sale_price_piece : product.sale_price_box;
-
-        if (cartIndex > -1) {
-            cart[cartIndex].quantity += 1;
-        } else {
-            cart.push({ product, unit, quantity: 1, price });
-        }
+        if (cartIndex > -1) { cart[cartIndex].quantity += 1; } 
+        else { cart.push({ product, unit, quantity: 1, price }); }
         updateCartUi();
     }
 
     function updateCartUi() {
         const tbody = document.querySelector('#cartTable tbody');
-        tbody.innerHTML = '';
-        let grandTotal = 0;
-        let totalItems = 0;
+        tbody.innerHTML = ''; let grandTotal = 0; let totalItems = 0;
 
         cart.forEach((item, index) => {
             const itemTotal = item.price * item.quantity;
-            grandTotal += itemTotal;
-            totalItems += item.quantity;
-
+            grandTotal += itemTotal; totalItems += item.quantity;
             tbody.innerHTML += `
                 <tr>
                     <td>${item.product.product_name}</td>
@@ -194,20 +243,20 @@
                 </tr>
             `;
         });
-
         document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
         document.getElementById('totalItems').innerText = totalItems;
     }
 
-    window.removeFromCart = (index) => {
-        cart.splice(index, 1);
-        updateCartUi();
-    };
+    window.removeFromCart = (index) => { cart.splice(index, 1); updateCartUi(); };
 
     window.checkoutInvoice = async () => {
         if(cart.length === 0) return alert("السلة فارغة!");
+        let totalBill = parseFloat(document.getElementById('grandTotal').innerText);
 
         try {
+            let receiptContent = `<h3>دكان غسق الذكي 🏪</h3><p>فاتورة مبيعات تبسيطية</p><hr>`;
+            let whatsappText = `*فاتورة دكان غسق الذكي 🏪*%0A--------------------%0A`;
+
             for (let item of cart) {
                 let piecesDeducted = item.unit === 'piece' ? item.quantity : (item.quantity * item.product.box_factor);
                 let totalCost = piecesDeducted * item.product.cost_price_piece;
@@ -227,18 +276,24 @@
                 });
 
                 const productRef = doc(db, "products", item.product.id);
-                await updateDoc(productRef, {
-                    current_stock_pieces: increment(-piecesDeducted)
-                });
+                await updateDoc(productRef, { current_stock_pieces: increment(-piecesDeducted) });
+
+                receiptContent += `<div style="display:flex; justify-content:space-between;"><span>${item.product.product_name} (${item.unit === 'piece' ? 'حبة' : 'كرتون'}) x${item.quantity}</span> <span>${totalRevenue.toFixed(2)} ر.س</span></div>`;
+                whatsappText += `• ${item.product.product_name} [${item.unit === 'piece' ? 'حبة' : 'كرتون'}] x${item.quantity} = ${totalRevenue.toFixed(2)} ر.س%0A`;
             }
 
-            alert("تمت العملية بنجاح! تم نقص المخزن وتحديث السحابة.");
-            cart = [];
-            updateCartUi();
-            loadProducts();
-        } catch (error) {
-            console.error("حدث خطأ أثناء ترحيل الفاتورة:", error);
-        }
+            receiptContent += `<hr><h4>المجموع الإجمالي: ${totalBill.toFixed(2)} ر.س</h4><p>شكراً لزيارتكم!</p><button class="btn btn-primary" onclick="window.print()">🖨️ طباعة ورقية</button> `;
+            whatsappText += `--------------------%0A*الإجمالي المطلوب: ${totalBill.toFixed(2)} ر.س*%0Aشكراً لزيارتكم!`;
+            
+            receiptContent += `<a href="https://api.whatsapp.com/send?text=${whatsappText}" target="_blank" class="btn btn-warning" style="display:inline-block; margin-top:5px; text-decoration:none;">💬 إرسال عبر الواتساب</a>`;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = receiptContent;
+            printArea.style.display = 'block';
+
+            alert("تم ترحيل الفاتورة بنجاح وتجهيز خيارات الطباعة والمشاركة بالأسفل.");
+            cart = []; updateCartUi(); loadProducts();
+        } catch (error) { console.error(error); }
     };
 </script>
 </body>
