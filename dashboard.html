@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم المالك - دكان غسق الذكي</title>
+    <title>لوحة مبيعات المالك - دكان غسق الذكي</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
@@ -23,31 +23,35 @@
 </head>
 <body>
 
-    <h1>لوحة تحكم المالك الإحصائية اللحظية 📊</h1>
-    <p>متابعة مبيعات دكان غسق، الأرباح، والرفوف مباشرة من هاتفك</p>
+    <h1>لوحة تحكم الإدارة المالية اللحظية 📊</h1>
+    <p>متابعة مبيعات وأرباح ومخزون دكان غسق مباشرة من هاتفك</p>
 
     <div class="grid-stats">
         <div class="card">
-            <h3>مبيعات اليوم</h3>
+            <h3>مبيعات اليوم الإجمالية</h3>
             <div class="value" id="todayRevenue">0.00 <span style="font-size:14px">ر.س</span></div>
         </div>
+        <div class="card">
+            <h3>تكلفة البضاعة المبيعة</h3>
+            <div class="value" id="todayCost" style="color: #6c757d;">0.00 <span style="font-size:14px">ر.س</span></div>
+        </div>
         <div class="card profit">
-            <h3>صافي أرباح اليوم</h3>
+            <h3>صافي الربح الحقيقي</h3>
             <div class="value" id="todayProfit" style="color: #28a745;">0.00 <span style="font-size:14px">ر.س</span></div>
         </div>
         <div class="card alert">
-            <h3>أصناف شارفة على النفاد</h3>
+            <h3>أصناف حرجة بالرفوف</h3>
             <div class="value" id="lowStockCount" style="color: #dc3545;">0</div>
         </div>
     </div>
 
-    <h2 class="section-title">⚠️ تنبيهات نقص المخزون وأماكن الرفوف</h2>
+    <h2 class="section-title">⚠️ تنبيهات نقص المخزون على الرفوف ومواقعها</h2>
     <table id="lowStockTable">
         <thead>
             <tr>
                 <th>اسم الصنف</th>
                 <th>المخزون المتبقي (بالحبة)</th>
-                <th>رقم الرف</th>
+                <th>موقع الرف المعتمد</th>
                 <th>الحالة</th>
             </tr>
         </thead>
@@ -56,18 +60,19 @@
         </tbody>
     </table>
 
-    <h2 class="section-title">📈 تحليل حركة المنتجات (الأعلى حركة والراكدة)</h2>
+    <h2 class="section-title">📈 حركة المنتجات (الأعلى مبيعاً والراكدة)</h2>
     <table id="productMovementTable">
         <thead>
             <tr>
                 <th>اسم الصنف</th>
-                <th>الكمية المباعة إجمالاً</th>
-                <th>العوائد المحققة</th>
-                <th>حالة الحركة</th>
+                <th>الكمية المباعة</th>
+                <th>العوائد الإجمالية</th>
+                <th>الربح الصافي منه</th>
+                <th>حالة السحب</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan="4" style="text-align:center;">جاري جرد الحركات الحالية...</td></tr>
+            <tr><td colspan="5" style="text-align:center;">جاري جرد الحركات الحالية...</td></tr>
         </tbody>
     </table>
 
@@ -75,7 +80,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // تم دمج بيانات مشروعك الحقيقية هنا بنجاح ✅
     const firebaseConfig = {
         apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
         authDomain: "shop-pos-firebase.firebaseapp.com",
@@ -93,21 +97,26 @@
         try {
             const txSnapshot = await getDocs(collection(db, "inventory_transactions"));
             let todayRevenue = 0;
+            let todayCost = 0;
             let todayProfit = 0;
             let productSalesCount = {}; 
             let productRevenueMap = {};
+            let productProfitMap = {};
 
             txSnapshot.forEach((doc) => {
                 const data = doc.data();
                 todayRevenue += data.total_revenue || 0;
+                todayCost += data.total_cost || 0;
                 todayProfit += data.net_profit || 0;
 
                 const pName = data.product_name;
                 productSalesCount[pName] = (productSalesCount[pName] || 0) + (data.quantity_changed || 0);
                 productRevenueMap[pName] = (productRevenueMap[pName] || 0) + (data.total_revenue || 0);
+                productProfitMap[pName] = (productProfitMap[pName] || 0) + (data.net_profit || 0);
             });
 
             document.getElementById('todayRevenue').innerText = todayRevenue.toFixed(2);
+            document.getElementById('todayCost').innerText = todayCost.toFixed(2);
             document.getElementById('todayProfit').innerText = todayProfit.toFixed(2);
 
             const prodSnapshot = await getDocs(collection(db, "products"));
@@ -138,16 +147,17 @@
                 if (!productSalesCount[p.product_name]) {
                     productSalesCount[p.product_name] = 0;
                     productRevenueMap[p.product_name] = 0;
+                    productProfitMap[p.product_name] = 0;
                 }
             });
 
             document.getElementById('lowStockCount').innerText = lowStockCount;
             if(lowStockCount === 0) {
-                lowStockTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#28a745;">المخزن ممتاز ولا توجد نواقص!</td></tr>`;
+                lowStockTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#28a745;">المخزن ممتاز ولا توجد نواقص بالرفوف!</td></tr>`;
             }
 
             let sortedProducts = Object.keys(productSalesCount).map(name => {
-                return { name: name, qty: productSalesCount[name], rev: productRevenueMap[name] };
+                return { name: name, qty: productSalesCount[name], rev: productRevenueMap[name], prof: productProfitMap[name] };
             });
 
             sortedProducts.sort((a, b) => b.qty - a.qty);
@@ -159,13 +169,14 @@
                         <td>${prod.name}</td>
                         <td>${prod.qty} حبة</td>
                         <td>${prod.rev.toFixed(2)} ر.س</td>
-                        <td>${isDead ? '<span class="badge-danger">صنف راكد 💤</span>' : '<span class="badge-success">حركة جيدة 🔥</span>'}</td>
+                        <td style="color:#28a745; font-weight:bold;">${prod.prof.toFixed(2)} ر.س</td>
+                        <td>${isDead ? '<span class="badge-danger">صنف راكد 💤</span>' : '<span class="badge-success">سحب سريع 🔥</span>'}</td>
                     </tr>
                 `;
             });
 
         } catch (error) {
-            console.error("خطأ في الداشبورد:", error);
+            console.error(error);
         }
     }
 
