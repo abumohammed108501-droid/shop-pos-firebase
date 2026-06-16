@@ -1,0 +1,33 @@
+shop-pos/
+│
+├── public/
+│   ├── manifest.json
+│   └── icons/
+│
+├── src/
+│   ├── components/
+│   │   ├── Navbar.jsx
+│   │   ├── ProductCard.jsx
+│   │   └── Loader.jsx
+│   │
+│   ├── pages/
+│   │   ├── Login.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── Products.jsx
+│   │   ├── AddProduct.jsx
+│   │   └── POS.jsx
+│   │
+│   ├── firebase/
+│   │   └── config.js
+│   │
+│   ├── hooks/
+│   │   └── useAuth.js
+│   │
+│   ├── utils/
+│   │   └── calculateUnits.js
+│   │
+│   ├── App.jsx
+│   └── main.jsx
+│
+├── package.json
+└── vite.config.js
