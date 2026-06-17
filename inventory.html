@@ -3,43 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جرد وتعديل مخزون دكان غسق</title>
+    <title>جرد بضاعة دكان غسق</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .table-container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
+        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; }
+        .nav-btn:hover, .nav-btn.active { background: #007bff; }
+        .table-container { max-width: 1000px; margin: 30px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-        th { background-color: #2c3e50; color: white; }
-        .input-inline { width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
-        .btn-sm { padding: 6px 12px; font-size: 14px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-sm:hover { background: #218838; }
+        th { background-color: #34495e; color: white; }
+        .input-inline { width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 15px; }
+        .btn-sm { padding: 8px 15px; font-size: 14px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .search-box { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #007bff; border-radius: 4px; margin-bottom: 15px; box-sizing: border-box; }
         .highlight { background-color: #fff3cd !important; border: 2px solid #ffc107; }
+        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
     </style>
 </head>
 <body>
 
+<div class="nav-bar">
+    <a href="index.html" class="nav-btn">🛒 شاشة البيع</a>
+    <a href="add-product.html" class="nav-btn">📦 إضافة بضاعة جديدة</a>
+    <a href="inventory.html" class="nav-btn active">📊 جرد المخزون</a>
+    <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
+    <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
+</div>
+
 <div class="table-container">
-    <h2>📋 شاشة الجرد السريع وتحديث كميات بضاعة الدكان</h2>
-    <p>امسح باركود أي مادة للانتقال إليها مباشرة وتعديل مخزونها اللحظي في السحاب:</p>
-    
-    <input type="text" id="inventoryScanner" class="search-box" placeholder="امسح الباركود هنا للقفز السريع للصنف بالجدول..." autofocus>
+    <h2>📋 شاشة جرد البضاعة الفوري</h2>
+    <p>امسح باركود أي منتج للقفز له وتحديث كميته المتوفرة بالدكان فوراً:</p>
+    <input type="text" id="inventoryScanner" class="search-box" placeholder="اضغط هنا ثم امسح باركود المادة..." autofocus>
     
     <table id="inventoryTable">
         <thead>
             <tr>
                 <th>اسم المنتج</th>
                 <th>موقع الرف</th>
-                <th>المخزون الحالي (بالحبة)</th>
-                <th>إدخل المخزون الجديد بالكامل</th>
+                <th>المخزون الحالي</th>
+                <th>المخزون الفعلي الجديد بالقطع</th>
                 <th>إجراء</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan="5" style="text-align:center;">جاري جلب البضاعة الحالية...</td></tr>
+            <tr><td colspan="5" style="text-align:center;">جاري قراءة المخزون السحابي...</td></tr>
         </tbody>
     </table>
+</div>
+
+<div class="footer">
+    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
 </div>
 
 <script type="module">
@@ -73,17 +87,16 @@
                 tbody.innerHTML += `
                     <tr id="row-${id}">
                         <td><b>${p.product_name}</b></td>
-                        <td><span style="color:#007bff; font-weight:bold;">${p.shelf_number || 'غير محدد'}</span></td>
+                        <td><span style="color:#007bff; font-weight:bold;">${p.shelf_number || '-'}</span></td>
                         <td>${p.current_stock_pieces} حبة</td>
-                        <td><input type="number" id="input-${id}" class="input-inline" placeholder="مثال: 500"></td>
-                        <td><button class="btn-sm" onclick="window.updateStock('${id}', '${p.product_name}')">تحديث المخزن</button></td>
+                        <td><input type="number" id="input-${id}" class="input-inline" placeholder="العدد الحقيقي"></td>
+                        <td><button class="btn-sm" onclick="window.updateStock('${id}', '${p.product_name}')">تحديث</button></td>
                     </tr>
                 `;
             });
         } catch(e) { console.error(e); }
     }
 
-    // ميزة القفز والتحديد السريع عبر باركود الحبة أو الكرتون
     document.getElementById('inventoryScanner').addEventListener('keydown', function(e) {
         if(e.key === 'Enter') {
             const code = this.value.trim(); this.value = '';
@@ -91,27 +104,24 @@
             
             let matched = itemsList.find(p => p.barcode_piece === code || p.barcode_box === code);
             if(matched) {
-                // إزالة التظليل السابق
                 document.querySelectorAll('tr').forEach(r => r.classList.remove('highlight'));
-                // التوجه والتركيز على العنصر الممسوح
                 let targetRow = document.getElementById(`row-${matched.id}`);
                 targetRow.classList.add('highlight');
                 targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 document.getElementById(`input-${matched.id}`).focus();
-            } else { alert('هذا الباركود غير مسجل بأي صنف!'); }
+            } else { alert('هذا الباركود غير مسجل.'); }
         }
     });
 
     window.updateStock = async (id, name) => {
         const val = document.getElementById(`input-${id}`).value;
-        if(!val) return alert("الرجاء إدخال قيمة للتحديث أولاً!");
+        if(!val) return alert("أدخل رقم المخزون الفعلي أولاً!");
         
         try {
-            const productRef = doc(db, "products", id);
-            await updateDoc(productRef, { current_stock_pieces: parseInt(val) });
-            alert(`تم تحديث مخزون (${name}) إلى ${val} حبة بنجاح!`);
+            await updateDoc(doc(db, "products", id), { current_stock_pieces: parseInt(val) });
+            alert(`تم جرد وتحديث مخزن صنف (${name}) بنجاح.`);
             loadInventory();
-        } catch(e) { alert("حدث خطأ أثناء التحديث."); }
+        } catch(e) { alert("خطأ في الشبكة."); }
     };
 
     loadInventory();
