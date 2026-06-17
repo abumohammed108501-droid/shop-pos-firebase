@@ -3,32 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شاشة البيع الكاشير - دكان الخور</title>
+    <title>دكان الخور - نظام POS المتكامل</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/@html5-qrcode/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
-        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex-wrap: wrap; }
-        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; }
-        .nav-btn:hover, .nav-btn.active { background: #28a745; }
-        .header-info { background: #1e272e; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; items-center: center; border-bottom: 4px solid #28a745; }
-        .header-info h1 { margin: 0; font-size: 24px; color: #28a745; }
-        .header-meta { text-align: left; font-size: 14px; font-weight: 500; }
-        .main-container { max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; gap: 20px; flex-wrap: wrap; }
-        .products-section { flex: 2; min-width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .cart-section { flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #28a745; }
-        .search-box { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; }
-        .search-box:focus { border-color: #28a745; outline: none; }
-        .grid-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .prod-btn { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px 10px; text-align: right; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .prod-btn:hover { background: #e8f5e9; border-color: #28a745; transform: translateY(-2px); }
-        .prod-price { display: block; color: #28a745; font-size: 14px; margin-top: 5px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-        .cart-item-actions button { background: #dc3545; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
-        .total-box { font-size: 22px; font-weight: bold; margin: 20px 0; display: flex; justify-content: space-between; color: #333; border-top: 2px solid #eee; padding-top: 15px; }
-        .checkout-btn { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .checkout-btn:hover { background: #218838; }
-        .footer { text-align: center; padding: 15px; color: #7f8c8d; font-size: 13px; border-top: 1px solid #ddd; margin-top: 30px; background: #fff; font-weight: bold; }
-        
-        /* إعدادات الطباعة المخصصة للفاتورة فقط */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
         @media print {
             body * { visibility: hidden; }
             #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
@@ -36,222 +18,531 @@
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-between">
 
-<!-- شريط التنقل الموحد والأيقونات (الذي اختفى وعاد الآن) -->
-<div class="nav-bar">
-    <a href="index.html" class="nav-btn active">🛒 شاشة البيع</a>
-    <a href="add-product.html" class="nav-btn">📦 إضافة بضاعة جديدة</a>
-    <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
-    <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
-    <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
-</div>
-
-<!-- ترويسة البيانات الرسمية المحدثة للمحل والمدير والمسؤولين -->
-<div class="header-info">
-    <div>
-        <h1>دكان الخور</h1>
-        <div style="font-size: 13px; color: #ccc; margin-top: 4px;">نظام إدارة نقاط البيع والمبيعات السحابية السريعة</div>
-    </div>
-    <div class="header-meta">
-        <div>المدير العام: علي محمد الفالح آل النابت</div>
-        <div style="margin-top: 3px;">الكاشير الحركي: عمر البطحاني</div>
-    </div>
-</div>
-
-<div class="main-container">
-    <!-- قائمة البضائع المجلوبة سحابياً -->
-    <div class="products-section">
-        <input type="text" id="searchBox" placeholder="ابحث عن صنف أو امسح باركود المنتج..." class="search-box" oninput="filterProducts()">
-        <div id="productsList" class="grid-products">
-            <p style="color:#7f8c8d; font-size:14px;">جاري جلب الرفوف والبضائع من السحاب وتجهيز دكان الخور...</p>
+    <header class="bg-slate-900 text-white shadow-xl">
+        <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-center sm:text-right">
+                <h1 class="text-3xl font-bold text-emerald-500 tracking-wide">دكان الخور</h1>
+                <p class="text-xs text-slate-400 mt-1">نظام إدارة المبيعات والمخزن السحابي الذكي</p>
+            </div>
+            <div class="bg-slate-800 px-4 py-2 rounded-lg text-sm border border-slate-700 space-y-1 text-right">
+                <div><span class="text-slate-400">المدير:</span> <span class="font-bold text-emerald-400">علي محمد الفالح آل النابت</span></div>
+                <div><span class="text-slate-400">الكاشير المسؤول:</span> <span class="font-bold text-blue-400">عمر البطحاني</span></div>
+            </div>
         </div>
-    </div>
-
-    <!-- سلة المشتريات والحساب اللحظي -->
-    <div class="cart-section">
-        <h3 style="margin-top: 0; border-bottom: 2px solid #f4f6f9; padding-bottom: 10px; color:#2c3e50;">🛒 سلة المبيعات الحالية</h3>
-        <div id="cartItems">
-            <p style="color:#aaa; text-align:center; padding: 20px 0; font-size:14px;">السلة فارغة. اضغط على البضائع للبيع</p>
+        <div class="bg-slate-800 border-t border-slate-700">
+            <div class="container mx-auto px-4 flex flex-wrap gap-2 py-2">
+                <button onclick="switchTab('pos-tab')" id="btn-pos-tab" class="tab-btn px-4 py-2 bg-emerald-600 text-white font-bold rounded-md transition text-sm">🛒 شاشة البيع السريع</button>
+                <a href="add-product.html" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-md transition text-sm">📦 إدخال بضاعة جديدة</a>
+                <button onclick="switchTab('reports-tab')" id="btn-reports-tab" class="tab-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-md transition text-sm">📈 الأرباح والتقارير المالية</button>
+            </div>
         </div>
+    </header>
+
+    <main class="container mx-auto p-4 flex-grow">
         
-        <div class="total-box">
-            <span>المجموع الكلي:</span>
-            <span style="color:#28a745;"><span id="cartTotal">0.00</span> ر.س</span>
-        </div>
-        
-        <button class="checkout-btn" onclick="checkoutAndPrint()">💾 حفظ وإصدار الفاتورة المباشرة</button>
-    </div>
-</div>
+        <div id="pos-tab" class="tab-content flex flex-col lg:flex-row gap-6">
+            <div class="w-full lg:w-2/3 flex flex-col gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 items-center">
+                    <input type="text" id="searchBox" oninput="filterPOSProducts()" placeholder="ابحث باسم الصنف أو امسح الباركود مباشرة..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base">
+                    <button onclick="toggleScanner('pos-scanner')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition whitespace-nowrap">
+                        📷 كاميرا الباركود للبيع
+                    </button>
+                </div>
 
-<!-- ======= منطقة الفاتورة الحرارية المخفية الجاهزة للطباعة فوراً ======= -->
-<div id="invoicePrintArea" style="display: none; background: white; padding: 20px; text-black; font-family: 'Courier New', monospace; width: 72mm; margin: auto;">
-    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 10px;">
-        <h2 style="font-size: 22px; margin: 0 0 5px 0; font-weight: bold;">دكان الخور</h2>
-        <p style="font-size: 12px; margin: 3px 0;">المالك والمدير: علي محمد الفالح آل النابت</p>
-        <p style="font-size: 12px; margin: 3px 0;">رقم هاتف المدير: 0548468541</p>
-        <p style="font-size: 12px; margin: 3px 0;">اسم الكاشير: عمر البطحاني</p>
-    </div>
-    
-    <div style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 8px;">
-        <div><strong>رقم الفاتورة المتسلسل:</strong> <span id="invNumber"></span></div>
-        <div style="margin-top: 3px;"><strong>التاريخ والوقت:</strong> <span id="invDateTime"></span></div>
-    </div>
+                <div id="pos-scanner-container" class="hidden bg-white p-4 rounded-xl shadow-inner border text-center">
+                    <div id="pos-scanner" class="mx-auto max-w-sm rounded-lg overflow-hidden"></div>
+                    <button onclick="toggleScanner('pos-scanner')" class="mt-2 text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold">إغلاق الكاميرا</button>
+                </div>
 
-    <table style="width: 100%; text-align: right; font-size: 12px; border-collapse: collapse; margin-bottom: 10px;">
-        <thead>
-            <tr style="border-bottom: 1px solid #000;">
-                <th style="padding-bottom: 4px;">الصنف</th>
-                <th style="text-align: center; padding-bottom: 4px;">الكمية</th>
-                <th style="text-align: left; padding-bottom: 4px;">السعر</th>
-            </tr>
-        </thead>
-        <tbody id="invItemsBody"></tbody>
-    </table>
+                <div id="categoryShelves" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-500 mb-3">الرفوف والتصنيفات المتاحة:</h3>
+                    <div id="shelvesContainer" class="flex flex-wrap gap-2">
+                        </div>
+                    <div id="posProductsGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
+                        </div>
+                </div>
+            </div>
 
-    <div style="border-top: 1px dashed #000; pt-8px; font-size: 15px; font-weight: bold; padding-top: 8px; display: flex; justify-content: space-between;">
-        <span>الصافي المطلوب:</span>
-        <span><span id="invTotal">0.00</span> ر.س</span>
-    </div>
-
-    <div style="text-align: center; margin-top: 25px; font-size: 11px; border-top: 1px solid #000; padding-top: 8px;">
-        <p style="margin:0;">شكراً لزيارتكم دكان الخور حياكم الله</p>
-        <p style="margin:4px 0 0 0; color:#555;">أنظمة غسق السحابية الموحدة © ٢٠٢٦ م</p>
-    </div>
-</div>
-
-<div class="footer">
-    المدير المسؤول: علي محمد الفالح آل النابت | هاتف: 0548468541 | كاشير: عمر البطحاني
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    // بيانات الاتصال بقاعدة البيانات السحابية الحقيقية الخاصة بدكانك والمطابقة لمشروعك كاملاً
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
-        authDomain: "shop-pos-firebase.firebaseapp.com",
-        projectId: "shop-pos-firebase",
-        storageBucket: "shop-pos-firebase.firebasestorage.app",
-        messagingSenderId: "970725406691",
-        appId: "1:970725406691:web:a1f769d0f11357423c52d6",
-        measurementId: "G-KR4RSBW9D5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let allProducts = [];
-    let cart = [];
-
-    // جلب البضائع الفعلية من الفايربيس وعرضها فوراً
-    onSnapshot(collection(db, "products"), (snapshot) => {
-        allProducts = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            allProducts.push({
-                id: doc.id,
-                productName: data.product_name || data.productName,
-                price: parseFloat(data.sale_price_piece || data.price || 0),
-                barcode: data.barcode_piece || data.barcode || ""
-            });
-        });
-        renderProducts(allProducts);
-    });
-
-    function renderProducts(productsList) {
-        const container = document.getElementById('productsList');
-        if (productsList.length === 0) {
-            container.innerHTML = '<p style="color:#aaa; font-size:14px; grid-column: 1/-1; text-align:center;">لا توجد بضائع مسجلة بالمخزن حالياً، توجه لصفحة الإضافة.</p>';
-            return;
-        }
-        let html = '';
-        productsList.forEach(p => {
-            html += `
-                <button class="prod-btn" onclick="window.addToCart('${p.productName}', ${p.price})">
-                    ${p.productName}
-                    <span class="prod-price">${p.price.toFixed(2)} ر.س</span>
-                </button>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
-    window.filterProducts = () => {
-        const text = document.getElementById('searchBox').value.toLowerCase().trim();
-        const filtered = allProducts.filter(p => p.productName.toLowerCase().includes(text) || p.barcode.includes(text));
-        renderProducts(filtered);
-    };
-
-    window.addToCart = (name, price) => {
-        const item = cart.find(i => i.name === name);
-        if (item) { item.qty += 1; } else { cart.push({ name, price, qty: 1 }); }
-        updateCartUI();
-    };
-
-    window.removeItem = (name) => {
-        cart = cart.filter(i => i.name !== name);
-        updateCartUI();
-    };
-
-    function updateCartUI() {
-        const container = document.getElementById('cartItems');
-        const totalContainer = document.getElementById('cartTotal');
-        if (cart.length === 0) {
-            container.innerHTML = '<p style="color:#aaa; text-align:center; padding: 20px 0; font-size:14px;">السلة فارغة. اضغط على البضائع للبيع</p>';
-            totalContainer.innerText = "0.00";
-            return;
-        }
-        let html = '', total = 0;
-        cart.forEach(item => {
-            const sub = item.price * item.qty;
-            total += sub;
-            html += `
-                <div class="cart-item">
-                    <div>
-                        <b>${item.name}</b>
-                        <div style="font-size:11px; color:#7f8c8d;">${item.price.toFixed(2)} × ${item.qty}</div>
-                    </div>
-                    <div class="cart-item-actions">
-                        <span style="font-weight:bold; color:#333; margin-right:10px;">${sub.toFixed(2)} ر.س</span>
-                        <button onclick="window.removeItem('${item.name}')">حذف</button>
+            <div class="w-full lg:w-1/3 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-fit min-h-[500px]">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 border-b pb-3 flex justify-between items-center">
+                        <span>🛒 الفاتورة الحالية</span>
+                        <span id="itemsCount" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">0 مواد</span>
+                    </h2>
+                    <div id="cartItemsList" class="divide-y divide-slate-100 max-h-80 overflow-y-auto my-3 pr-1">
+                        <p class="text-slate-400 text-center py-8 text-sm">السلة فارغة، اضغط على البضائع للبيع الفوري.</p>
                     </div>
                 </div>
-            `;
+
+                <div class="border-t pt-4 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">طريقة دفع الفاتورة:</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-500 font-bold text-emerald-700" id="lbl-cash">
+                                <input type="radio" name="paymentMethod" value="كاش" checked onchange="updatePaymentUI('كاش')" class="hidden"> 💵 نقداً (كاش)
+                            </label>
+                            <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-white text-slate-600 font-medium" id="lbl-debt">
+                                <input type="radio" name="paymentMethod" value="دين" onchange="updatePaymentUI('دين')" class="hidden"> 📝 آجل (دين)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="debtCustomerContainer" class="hidden">
+                        <label class="block text-xs font-bold text-red-600 mb-1">اسم العميل (المستدين):</label>
+                        <input type="text" id="debtCustomerName" placeholder="اكتب اسم العميل الثلاثي لتقييد الدين..." class="w-full p-2 border border-red-300 rounded-lg focus:outline-red-500">
+                    </div>
+
+                    <div class="flex justify-between items-center text-slate-800 font-bold text-2xl bg-slate-50 p-3 rounded-lg">
+                        <span class="text-base text-slate-500">المجموع:</span>
+                        <span><span id="cartTotalSum">0.00</span> <span class="text-xs">ر.س</span></span>
+                    </div>
+
+                    <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-lg flex items-center justify-center gap-2">
+                        💾 ترحيل وحفظ الفاتورة الفورية
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports-tab" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-xl shadow">
+                    <h4 class="text-sm font-medium opacity-80">مبيعات اليوم الإجمالية</h4>
+                    <p class="text-3xl font-bold mt-2"><span id="todaySales">0.00</span> <span class="text-sm">ر.س</span></p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 rounded-xl shadow">
+                    <h4 class="text-sm font-medium opacity-80">مبيعات الشهر الحالية</h4>
+                    <p class="text-3xl font-bold mt-2"><span id="monthSales">0.00</span> <span class="text-sm">ر.س</span></p>
+                </div>
+                <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-xl shadow">
+                    <h4 class="text-sm font-medium opacity-80">صافي أرباح الدكان المكتسبة</h4>
+                    <p class="text-3xl font-bold mt-2"><span id="netProfit">0.00</span> <span class="text-sm">ر.س</span></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">سجل حركة الفواتير والعمليات المباشرة</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-sm border-b">
+                                <th class="p-3">رقم الفاتورة</th>
+                                <th class="p-3">التاريخ والوقت</th>
+                                <th class="p-3">نوع الدفع</th>
+                                <th class="p-3">القيمة الإجمالية</th>
+                                <th class="p-3">صافي الربح منها</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesLogTableBody" class="text-slate-700 text-sm divide-y">
+                            <tr><td colspan="5" class="text-center py-4 text-slate-400">جاري تحميل وتحليل الفواتير السحابية...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="invoicePrintArea" class="hidden bg-white p-4 text-black text-xs" style="font-family: 'Courier New', monospace; width: 72mm; margin: auto;">
+        <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 8px;">
+            <h2 style="font-size: 20px; margin: 0 0 4px 0; font-weight: bold;">دكان الخور</h2>
+            <p style="margin: 2px 0;">المدير: علي محمد الفالح آل النابت</p>
+            <p style="margin: 2px 0;">هاتف الإدارة: 0548468541</p>
+            <p style="margin: 2px 0;">الكاشير: عمر البطحاني</p>
+        </div>
+        <div style="margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px; font-size: 11px;">
+            <div><strong>رقم الفاتورة:</strong> #<span id="printInvNumber"></span></div>
+            <div><strong>نوع العمليـة:</strong> <span id="printInvType"></span></div>
+            <div><strong>التاريخ والوقت:</strong> <span id="printInvDateTime"></span></div>
+        </div>
+        <table style="width: 100%; text-align: right; border-collapse: collapse; margin-bottom: 8px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000;">
+                    <th style="padding-bottom: 3px;">الصنف</th>
+                    <th style="text-align: center; padding-bottom: 3px;">الكمية</th>
+                    <th style="text-align: left; padding-bottom: 3px;">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody id="printInvItemsBody"></tbody>
+        </table>
+        <div style="border-top: 1px dashed #000; padding-top: 6px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between;">
+            <span>المجموع النهائي:</span>
+            <span><span id="printInvTotal">0.00</span> ر.س</span>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 10px; border-top: 1px solid #000; padding-top: 6px;">
+            <p style="margin: 0;">شكراً لتعاملكم معنا وزيارتكم دكان الخور</p>
+            <p style="margin: 3px 0 0 0; color: #666;">نظام إدارة غسق الذكي الموحد 2026م</p>
+        </div>
+    </div>
+
+    <footer class="bg-slate-900 text-slate-400 text-center py-3 text-xs border-t border-slate-800 font-bold">
+        دكان الخور © 2026 | هاتف المدير: 0548468541 | المطور التقني: نظام غسق السحابي
+    </footer>
+
+    <script>
+        // إعدادات وبيانات الاتصال بقاعدة بيانات الفايربيس السحابية المستقرة الحقيقية لدكانك
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
+            authDomain: "shop-pos-firebase.firebaseapp.com",
+            projectId: "shop-pos-firebase",
+            storageBucket: "shop-pos-firebase.firebasestorage.app",
+            messagingSenderId: "970725406691",
+            appId: "1:970725406691:web:a1f769d0f11357423c52d6",
+            measurementId: "G-KR4RSBW9D5"
+        };
+
+        // تفعيل المشروع
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let allProducts = [];
+        let cart = [];
+        let activeScanner = null;
+        let selectedCategory = "الكل";
+
+        // الجلب اللحظي والمستمر للبضائع والمخزون الحقيقي من السحاب
+        db.collection('products').onSnapshot(snapshot => {
+            allProducts = [];
+            let categories = new Set();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                allProducts.push({
+                    id: doc.id,
+                    productName: data.productName || data.product_name || "",
+                    price: parseFloat(data.price || data.sale_price_piece || 0),
+                    cost: parseFloat(data.costPrice || data.purchase_price_piece || data.price * 0.7),
+                    quantity: parseInt(data.quantity || 0),
+                    barcode: data.barcode || data.barcode_piece || "",
+                    category: data.category || "عام"
+                });
+                categories.add(data.category || "عام");
+            });
+            renderCategoryShelves(Array.from(categories));
+            renderPOSGrid();
+            calculateFinancialReports();
+        }, error => {
+            console.error("Firebase Snapshot Error: ", error);
         });
-        container.innerHTML = html;
-        totalContainer.innerText = total.toFixed(2);
-    }
 
-    window.checkoutAndPrint = async () => {
-        if (cart.length === 0) return alert('السلة فارغة تماماً يا كاشير!');
+        // بناء أزرار الرفوف والتصنيفات تلقائياً
+        function renderCategoryShelves(categories) {
+            const container = document.getElementById('shelvesContainer');
+            let html = `<button onclick="filterCategory('الكل')" class="px-3 py-1.5 text-xs font-bold rounded-full transition ${selectedCategory === 'الكل' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">🌟 الكل (${allProducts.length})</button>`;
+            categories.forEach(cat => {
+                const count = allProducts.filter(p => p.category === cat).length;
+                html += `<button onclick="filterCategory('${cat}')" class="px-3 py-1.5 text-xs font-bold rounded-full transition ${selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">🗂️ رف ${cat} (${count})</button>`;
+            });
+            container.innerHTML = html;
+        }
 
-        // توليد رقم تسلسلي تصاعدي مستمر يبدأ من 1001 تلقائياً
-        let lastNum = localStorage.getItem('dokan_khor_serial') || 1000;
-        let nextNum = parseInt(lastNum) + 1;
-        localStorage.setItem('dokan_khor_serial', nextNum);
+        window.filterCategory = (cat) => {
+            selectedCategory = cat;
+            renderPOSGrid();
+            const categories = Array.from(new Set(allProducts.map(p => p.category)));
+            renderCategoryShelves(categories);
+        };
 
-        document.getElementById('invNumber').innerText = nextNum;
-        document.getElementById('invDateTime').innerText = new Date().toLocaleString('ar-EG');
+        // عرض البضائع في شبكة البيع حسب الرف المختار والبحث
+        function renderPOSGrid(filteredList = null) {
+            const container = document.getElementById('posProductsGrid');
+            let list = filteredList ? filteredList : allProducts;
+            
+            if (selectedCategory !== "الكل" && !filteredList) {
+                list = list.filter(p => p.category === selectedCategory);
+            }
 
-        let rows = '', total = 0;
-        cart.forEach(item => {
-            const sub = item.price * item.qty;
-            total += sub;
-            rows += `<tr><td style="padding: 5px 0;">${item.name}</td><td style="text-align:center;">${item.qty}</td><td style="text-align:left;">${sub.toFixed(2)}</td></tr>`;
-        });
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm text-center col-span-full py-6">لا توجد منتجات مطابقة في هذا الرف.</p>';
+                return;
+            }
 
-        document.getElementById('invItemsBody').innerHTML = rows;
-        document.getElementById('invTotal').innerText = total.toFixed(2);
+            let html = '';
+            list.forEach(p => {
+                const outOfStock = p.quantity <= 0;
+                html += `
+                    <button onclick="addToCart('${p.id}')" ${outOfStock ? 'disabled' : ''} class="p-3 bg-white border ${outOfStock ? 'border-red-200 bg-red-50 opacity-60' : 'border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30'} text-right rounded-xl transition shadow-sm relative flex flex-col justify-between h-28">
+                        <div>
+                            <span class="block text-slate-800 font-bold text-sm line-clamp-2">${p.productName}</span>
+                            <span class="text-xs ${p.quantity < 5 ? 'text-orange-600 font-bold' : 'text-slate-400'}">المخزن: ${p.quantity} حبة</span>
+                        </div>
+                        <div class="flex justify-between items-center w-full mt-2">
+                            <span class="text-emerald-600 font-black text-base">${p.price.toFixed(2)} <span class="text-2xs">ر.س</span></span>
+                            ${outOfStock ? '<span class="text-3xs bg-red-600 text-white px-1.5 py-0.5 rounded">منتهي</span>' : ''}
+                        </div>
+                    </button>
+                `;
+            });
+            container.innerHTML = html;
+        }
 
-        // تشغيل الطابعة الفورية الفعالة
-        window.print();
+        // تصفية وقراءة خانة البحث
+        window.filterProducts = window.filterPOSProducts = () => {
+            const query = document.getElementById('searchBox').value.toLowerCase().trim();
+            if(!query) { renderPOSGrid(); return; }
+            const exactBarcodeMatch = allProducts.find(p => p.barcode === query);
+            if(exactBarcodeMatch && exactBarcodeMatch.quantity > 0) {
+                addToCart(exactBarcodeMatch.id);
+                document.getElementById('searchBox').value = '';
+                renderPOSGrid();
+                return;
+            }
+            const filtered = allProducts.filter(p => p.productName.toLowerCase().includes(query) || p.barcode.includes(query));
+            renderPOSGrid(filtered);
+        };
 
-        // تصفير وتنظيف السلة لبدء زبون جديد
-        cart = [];
-        updateCartUI();
-    };
-</script>
+        // إضافة البضائع إلى سلة المبيعات
+        window.addToCart = (id) => {
+            const prod = allProducts.find(p => p.id === id);
+            if (!prod || prod.quantity <= 0) return;
+
+            const cartItem = cart.find(item => item.id === id);
+            if (cartItem) {
+                if (cartItem.qty >= prod.quantity) {
+                    alert('عذراً! تجاوزت الكمية المتاحة في الرف الحالي.');
+                    return;
+                }
+                cartItem.qty += 1;
+            } else {
+                cart.push({ id: prod.id, name: prod.productName, price: prod.price, cost: prod.cost, qty: 1 });
+            }
+            updateCartUI();
+        };
+
+        window.changeCartQty = (id, delta) => {
+            const item = cart.find(i => i.id === id);
+            const prod = allProducts.find(p => p.id === id);
+            if (!item || !prod) return;
+            
+            item.qty += delta;
+            if(item.qty > prod.quantity) { item.qty = prod.quantity; alert('تم الوصول للحد الأقصى للمخزون.'); }
+            if (item.qty <= 0) { cart = cart.filter(i => i.id !== id); }
+            updateCartUI();
+        };
+
+        function updateCartUI() {
+            const listContainer = document.getElementById('cartItemsList');
+            const totalContainer = document.getElementById('cartTotalSum');
+            const countContainer = document.getElementById('itemsCount');
+            
+            if (cart.length === 0) {
+                listContainer.innerHTML = '<p class="text-slate-400 text-center py-8 text-sm">السلة فارغة، اضغط على البضائع للبيع الفوري.</p>';
+                totalContainer.innerText = "0.00";
+                countContainer.innerText = "0 مواد";
+                return;
+            }
+
+            let html = '', total = 0, totalItems = 0;
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                totalItems += item.qty;
+                html += `
+                    <div class="flex justify-between items-center py-2.5 text-sm">
+                        <div class="max-w-[60%]">
+                            <span class="font-bold text-slate-800 block truncate">${item.name}</span>
+                            <span class="text-xs text-slate-400">${item.price.toFixed(2)} ر.س</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeCartQty('${item.id}', -1)" class="w-6 h-6 bg-slate-100 hover:bg-slate-200 rounded font-black text-center text-xs">-</button>
+                            <span class="font-bold text-slate-700 text-sm">${item.qty}</span>
+                            <button onclick="changeCartQty('${item.id}', 1)" class="w-6 h-6 bg-slate-100 hover:bg-slate-200 rounded font-black text-center text-xs">+</button>
+                            <span class="font-black text-slate-900 min-w-[60px] text-left mr-2">${sub.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+            totalContainer.innerText = total.toFixed(2);
+            countContainer.innerText = `${totalItems} مواد`;
+        }
+
+        window.updatePaymentUI = (method) => {
+            const lblCash = document.getElementById('lbl-cash');
+            const lblDebt = document.getElementById('lbl-debt');
+            const debtContainer = document.getElementById('debtCustomerContainer');
+
+            if(method === 'كاش') {
+                lblCash.className = "flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-500 font-bold text-emerald-700";
+                lblDebt.className = "flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-white text-slate-600 font-medium";
+                debtContainer.classList.add('hidden');
+            } else {
+                lblDebt.className = "flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-red-50 border-red-500 font-bold text-red-700";
+                lblCash.className = "flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer bg-white text-slate-600 font-medium";
+                debtContainer.classList.remove('hidden');
+            }
+        };
+
+        // إتمام عملية البيع: نقص المخزون سحابياً وحفظ الفاتورة
+        window.processCheckout = async () => {
+            if (cart.length === 0) return alert('السلة فارغة تماماً يا كاشير!');
+            
+            const pMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            let customerName = "زبون نقدي";
+            
+            if(pMethod === 'دين') {
+                customerName = document.getElementById('debtCustomerName').value.trim();
+                if(!customerName) return alert('الرجاء إدخال اسم العميل لقيد الفاتورة في دفتر الديون السحابي!');
+            }
+
+            try {
+                // 1. توليد الرقم التسلسلي التصاعدي
+                let currentSerial = localStorage.getItem('khor_invoice_serial') || 1000;
+                let nextSerial = parseInt(currentSerial) + 1;
+                localStorage.setItem('khor_invoice_serial', nextSerial);
+
+                let totalSalesSum = 0;
+                let totalCostSum = 0;
+                let invoiceItems = [];
+
+                const batch = db.batch();
+
+                // 2. معالجة العناصر ونقص كميات المخزن سحابياً فوراً
+                for (const item of cart) {
+                    const productRef = db.collection('products').doc(item.id);
+                    const freshProd = allProducts.find(p => p.id === item.id);
+                    const newQty = freshProd.quantity - item.qty;
+                    
+                    batch.update(productRef, { quantity: newQty });
+
+                    totalSalesSum += item.price * item.qty;
+                    totalCostSum += item.cost * item.qty;
+                    invoiceItems.push({
+                        name: item.name,
+                        qty: item.qty,
+                        price: item.price,
+                        subtotal: item.price * item.qty
+                    });
+                }
+
+                const profitMade = totalSalesSum - totalCostSum;
+
+                // 3. كتابة وحفظ الفاتورة السحابية في المبيعات
+                const invoiceData = {
+                    invoiceId: nextSerial,
+                    date: firebase.firestore.FieldValue.serverTimestamp(),
+                    timestamp: Date.now(),
+                    paymentMethod: pMethod,
+                    customer: customerName,
+                    totalAmount: totalSalesSum,
+                    netProfit: profitMade,
+                    items: invoiceItems
+                };
+
+                const invoiceRef = db.collection('sales').doc();
+                batch.set(invoiceRef, invoiceData);
+
+                await batch.commit();
+
+                // 4. تعبئة شاشة الطباعة والتشغيل الفوري للمتصفح
+                document.getElementById('printInvNumber').innerText = nextSerial;
+                document.getElementById('printInvType').innerText = pMethod === 'دين' ? `آجل (دين لـ ${customerName})` : "نقداً (كاش)";
+                document.getElementById('printInvDateTime').innerText = new Date().toLocaleString('ar-SA');
+                
+                let printRows = '';
+                invoiceItems.forEach(i => {
+                    printRows += `<tr><td style="padding:4px 0;">${i.name}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:left;">${i.subtotal.toFixed(2)}</td></tr>`;
+                });
+                document.getElementById('printInvItemsBody').innerHTML = printRows;
+                document.getElementById('printInvTotal').innerText = totalSalesSum.toFixed(2);
+
+                window.print();
+
+                // تفريغ السلة وتصفير المدخلات
+                cart = [];
+                updateCartUI();
+                document.getElementById('debtCustomerName').value = '';
+                updatePaymentUI('كاش');
+                alert(`✅ تم حفظ وترحيل الفاتورة #${nextSerial} ونقص المخزون بنجاح!`);
+
+            } catch (err) {
+                console.error(err);
+                alert('❌ فشل إتمام العملية السحابية: ' + err.message);
+            }
+        };
+
+        // معالجة وحساب الإحصائيات المالية والأرباح التلقائية
+        function calculateFinancialReports() {
+            db.collection('sales').get().then(snapshot => {
+                let todayTotal = 0;
+                let monthTotal = 0;
+                let profitTotal = 0;
+                let rowsHtml = '';
+
+                const now = new Date();
+                const todayStr = now.toDateString();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                let salesList = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const fDate = data.date ? data.date.toDate() : new Date(data.timestamp);
+                    
+                    salesList.push({ ...data, fDate });
+
+                    // احتساب مبيعات اليوم
+                    if (fDate.toDateString() === todayStr) {
+                        todayTotal += data.totalAmount;
+                    }
+                    // احتساب مبيعات الشهر
+                    if (fDate.getMonth() === currentMonth && fDate.getFullYear() === currentYear) {
+                        monthTotal += data.totalAmount;
+                    }
+                    // إجمالي الأرباح المتراكمة للمدير
+                    profitTotal += data.netProfit || 0;
+                });
+
+                // ترتيب عرض السجل من الأحدث للأقدم
+                salesList.sort((a,b) => b.timestamp - a.timestamp);
+                salesList.slice(0, 15).forEach(s => {
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold">#${s.invoiceId}</td>
+                            <td class="p-3 text-slate-500">${s.fDate.toLocaleString('ar-SA')}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${s.paymentMethod === 'دين' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">${s.paymentMethod}</span></td>
+                            <td class="p-3 font-black text-slate-900">${s.totalAmount.toFixed(2)} ر.س</td>
+                            <td class="p-3 text-emerald-600 font-bold">+${(s.netProfit || 0).toFixed(2)} ر.س</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('todaySales').innerText = todayTotal.toFixed(2);
+                document.getElementById('monthSales').innerText = monthTotal.toFixed(2);
+                document.getElementById('netProfit').innerText = profitTotal.toFixed(2);
+                document.getElementById('salesLogTableBody').innerHTML = rowsHtml || '<tr><td colspan="5" class="text-center py-4">لا توجد مبيعات مسجلة حتى الآن.</td></tr>';
+            });
+        }
+
+        // دالة تفعيل الكاميرا لقراءة الباركود للبيع المباشر
+        window.toggleScanner = (elementId) => {
+            const container = document.getElementById(elementId + '-container');
+            if (activeScanner) {
+                activeScanner.clear();
+                activeScanner = null;
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+                activeScanner = new Html5QrcodeScanner(elementId, { fps: 15, qrbox: 250 });
+                activeScanner.render((text) => {
+                    document.getElementById('searchBox').value = text;
+                    window.filterPOSProducts();
+                    // إغلاق الكاميرا تلقائياً بعد الالتقاط الناجح لتسهيل الحركة
+                    toggleScanner(elementId);
+                }, (err) => {});
+            }
+        };
+
+        // دالة التبديل بين الشاشات واللوحات الرئيسية
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-md transition text-sm";
+            });
+            document.getElementById('btn-' + tabId).className = "tab-btn px-4 py-2 bg-emerald-600 text-white font-bold rounded-md transition text-sm";
+        };
+    </script>
 </body>
 </html>
