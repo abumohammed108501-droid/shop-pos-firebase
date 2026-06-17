@@ -3,46 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دفتر ديون الدكان - سحابي ذكي</title>
+    <title>دفتر الديون والآجل - دكان غسق</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .box-container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; text-align: center; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
+        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; }
+        .nav-btn:hover, .nav-btn.active { background: #007bff; }
+        .box-container { max-width: 900px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
         .flex-inputs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .flex-inputs input { flex: 1; min-width: 150px; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-        th { background-color: #2c3e50; color: white; }
-        .btn-pay { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        th { background-color: #34495e; color: white; }
+        .btn-pay { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
     </style>
 </head>
 <body>
 
+<div class="nav-bar">
+    <a href="index.html" class="nav-btn">🛒 شاشة البيع</a>
+    <a href="add-product.html" class="nav-btn">📦 إضافة بضاعة جديدة</a>
+    <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
+    <a href="customers.html" class="nav-btn active">👥 دفتر الديون</a>
+    <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
+</div>
+
 <div class="box-container">
-    <h2>📑 دفتر حسابات وعملاء الآجل والديون السحابي</h2>
+    <h2>👥 دفتر حسابات عملاء الآجل والديون السحابي</h2>
     
     <h3>➕ تسجيل عميل جديد بالدفتر:</h3>
     <div class="flex-inputs">
-        <input type="text" id="cName" placeholder="اسم العميل المعتمد الفعلي...">
-        <input type="number" step="0.01" id="cDebt" placeholder="المديونية الافتتاحية الحالية إن وجدت (ر.س)..." value="0">
-        <button class="btn" onclick="addNewCustomer()">فتح حساب للعميل</button>
+        <input type="text" id="cName" placeholder="اسم العميل الكامل...">
+        <input type="number" step="0.01" id="cDebt" placeholder="المديونية الحالية السابقة إن وجدت" value="0">
+        <button class="btn" onclick="addNewCustomer()">فتح ملف للعميل</button>
     </div>
 
-    <h3>👥 كشف مديونيات العملاء الحاليين:</h3>
+    <h3>📋 كشف مديونيات المحل الحالية</h3>
     <table id="customersTable">
         <thead>
             <tr>
                 <th>اسم العميل</th>
-                <th>إجمالي الدين المطلوب منه</th>
-                <th>تعديل الحساب (بيع آجل / سداد)</th>
-                <th>إجراء</th>
+                <th>إجمالي الدين المطلوب</th>
+                <th>المبلغ المراد تعديله</th>
+                <th>إجراءات الحساب</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan="4" style="text-align:center;">جاري تحميل دفتر الديون...</td></tr>
+            <tr><td colspan="4" style="text-align:center;">جاري جلب كشف الديون...</td></tr>
         </tbody>
     </table>
+</div>
+
+<div class="footer">
+    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
 </div>
 
 <script type="module">
@@ -65,21 +81,18 @@
     async function loadCustomers() {
         try {
             const querySnapshot = await getDocs(collection(db, "customers"));
-            const tbody = document.querySelector('#customersTable tbody');
-            tbody.innerHTML = '';
+            const tbody = document.querySelector('#customersTable tbody'); tbody.innerHTML = '';
 
             querySnapshot.forEach((docSnap) => {
                 const c = docSnap.data(); const id = docSnap.id;
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${c.customer_name}</b></td>
-                        <td style="color:#d9534f; font-weight:bold;">${parseFloat(c.total_debt).toFixed(2)} ر.س</td>
-                        <td>
-                            <input type="number" id="amt-${id}" style="width:100px; padding:5px;" placeholder="المبلغ ر.س">
-                        </td>
+                        <td style="color:#dc3545; font-weight:bold;">${parseFloat(c.total_debt).toFixed(2)} ر.س</td>
+                        <td><input type="number" id="amt-${id}" style="width:110px; padding:6px;" placeholder="ر.س"></td>
                         <td>
                             <button class="btn-pay" onclick="window.adjustDebt('${id}', 1, '${c.customer_name}')">➕ شراء آجل</button>
-                            <button class="btn-pay" style="background:#dc3545;" onclick="window.adjustDebt('${id}', -1, '${c.customer_name}')">💵 استلام سداد</button>
+                            <button class="btn-pay" style="background:#dc3545;" onclick="window.adjustDebt('${id}', -1, '${c.customer_name}')">💵 استلام نقد</button>
                         </td>
                     </tr>
                 `;
@@ -90,26 +103,25 @@
     window.addNewCustomer = async () => {
         const name = document.getElementById('cName').value.trim();
         const debt = parseFloat(document.getElementById('cDebt').value) || 0;
-        if(!name) return alert("الرجاء كتابة اسم العميل أولاً!");
+        if(!name) return alert("اكتب اسم العميل أولاً!");
 
         try {
             await addDoc(collection(db, "customers"), { customer_name: name, total_debt: debt });
-            alert(`تم فتح حساب مالي للعميل (${name}) بنجاح.`);
+            alert(`تم إدراج العميل ${name} بالدفتر.`);
             document.getElementById('cName').value = ''; document.getElementById('cDebt').value = '0';
             loadCustomers();
-        } catch(e) { alert("خلل بالاتصال."); }
+        } catch(e) { alert("خطأ اتصال."); }
     };
 
     window.adjustDebt = async (id, factor, name) => {
         const amt = parseFloat(document.getElementById(`amt-${id}`).value);
-        if(!amt || amt <= 0) return alert("الرجاء إدخال قيمة صحيحة للعملية الحسابية!");
+        if(!amt || amt <= 0) return alert("الرجاء تحديد مبلغ العملية!");
 
         try {
-            const customerRef = doc(db, "customers", id);
-            await updateDoc(customerRef, { total_debt: increment(amt * factor) });
-            alert(`تم تحديث حساب العميل ${name} بمقدار ${amt} ر.س`);
+            await updateDoc(doc(db, "customers", id), { total_debt: increment(amt * factor) });
+            alert(`تم تحديث كشف حساب العميل ${name}.`);
             loadCustomers();
-        } catch(e) { alert("حدث خطأ أثناء تعديل الحساب."); }
+        } catch(e) { alert("خلل بالتحديث."); }
     };
 
     loadCustomers();
