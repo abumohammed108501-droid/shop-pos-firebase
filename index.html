@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دكان الخور - نظام POS الاحترافي المتكامل</title>
+    <title>دكان الخور - نظام POS الاحترافي المتكامل v3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -80,7 +80,12 @@
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
                     <div class="text-right">
-                        <h1 class="text-xl font-black text-emerald-500 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-vault"></i>دكان الخور</h1>
+                        <h1 class="text-xl font-black text-emerald-500 tracking-wide flex items-center gap-1.5">
+                            <i class="fa-solid fa-vault"></i>دكان الخور
+                            <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-3xs font-medium text-emerald-400 border border-emerald-500/20">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 ml-1 animate-pulse"></span> متصل سحابياً
+                            </span>
+                        </h1>
                         <p class="text-3xs text-slate-400 mt-0.5 font-medium">المبرمج والمصمم: عمر يوسف البطحاني</p>
                     </div>
                 </div>
@@ -120,7 +125,10 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div id="cashCalculatorBox" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
-                            <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-calculator text-blue-500 ml-1"></i> حاسبة كاش السريعة (إرجاع المتبقي)</h4>
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-calculator text-blue-500 ml-1"></i> حاسبة كاش السريعة (إرجاع المتبقي)</h4>
+                                <span class="text-3xs text-slate-400 font-mono">نظام التصفير الملقائي مدمج</span>
+                            </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-3xs text-slate-400 mb-1">المبلغ المستلم:</label>
@@ -359,7 +367,7 @@
         </div>
 
         <footer class="bg-slate-900 text-slate-500 text-center py-2.5 text-xs border-t border-slate-800 font-bold flex flex-col sm:flex-row justify-between items-center px-4 gap-2">
-            <div><i class="fa-solid fa-code-branch text-emerald-500"></i> نظام غسق البرمجي السحابي الموحد v3.0</div>
+            <div><i class="fa-solid fa-code-branch text-emerald-500"></i> نظام غسق البرمجي السحابي الموحد v3.5</div>
             <div class="text-slate-400">تصميم وبرمجة: عمر يوسف البطحاني | حقوق دكان الخور © 2026</div>
         </footer>
     </div>
@@ -380,11 +388,41 @@
 
         let allProducts = [];
         let cart = [];
-        let suspendedCart = null; // مخزن الفاتورة المعلقة مؤقتاً
+        let suspendedCart = null; 
         let html5QrcodeScanner = null;
         let currentUserRole = ""; 
         let lastScannedBarcode = "";
         let lastScanTime = 0;
+
+        // نظام المؤثرات الصوتية الاحترافي بدون ملفات خارجية
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    // صوت الـ POS المعتاد: حاد وسريع جداً
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'error') {
+                    // صوت التنبيه أو الخطأ: ممتد وغليظ "تييييت"
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime); 
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5); 
+                }
+            } catch (e) {
+                console.log("Audio feedback error:", e);
+            }
+        }
 
         window.toggleSidebar = (open) => {
             const sidebar = document.getElementById('sidebarDrawer');
@@ -410,9 +448,13 @@
                 document.getElementById('currentActiveUserLabel').innerText = "عمر يوسف البطحاني (الكاشير والمطور)";
                 document.getElementById('currentActiveUserLabel').className = "font-bold text-blue-400";
             } else {
+                playSound('error');
                 alert("❌ الرمز السري غير صحيح!");
                 return;
             }
+
+            // تفعيل نظام الصوت بعد أول تفاعل للمستخدم امتثالاً لسياسات المتصفحات
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('mainSystemWrapper').classList.remove('hidden');
@@ -449,8 +491,6 @@
                 });
                 
                 allProducts.sort((a, b) => a.productName.localeCompare(b.productName, 'ar'));
-                document.getElementById('totalProductsLabel').innerText = allProducts.length;
-                
                 renderStockAlertsTable();
                 if(currentUserRole === 'admin') calculateFinancialReports();
                 fetchCustomersDebts();
@@ -463,7 +503,6 @@
             });
         }
 
-        // توليد جدول جرد المخزون الحرج والنواقص تلقائياً
         function renderStockAlertsTable() {
             const tableBody = document.getElementById('stockAlertTableBody');
             const criticalItems = allProducts.filter(p => p.quantity <= 3);
@@ -496,8 +535,13 @@
 
             const exactBarcode = allProducts.find(p => p.barcode === query);
             if (exactBarcode) {
-                if (exactBarcode.quantity > 0) addToCart(exactBarcode.id);
-                else alert('⚠️ الصنف مخلص من الرف.');
+                if (exactBarcode.quantity > 0) {
+                    addToCart(exactBarcode.id);
+                    playSound('success'); // مسح ناجح
+                } else {
+                    playSound('error'); // السلعة مخلصة
+                    alert('⚠️ الصنف مخلص من الرف الميداني.');
+                }
                 document.getElementById('searchBox').value = '';
                 dropdown.classList.add('hidden');
                 return;
@@ -506,7 +550,7 @@
             const matches = allProducts.filter(p => p.productName.toLowerCase().includes(query) || p.barcode.includes(query));
             
             if (matches.length === 0) {
-                dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">لا توجد بضاعة مطابقة</div>';
+                dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">لا توجد بضاعة مطابقة للبحث</div>';
                 dropdown.classList.remove('hidden');
                 return;
             }
@@ -518,7 +562,7 @@
                 let badge = isOut ? '<span class="text-2xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">مخلص</span>' : (isLow ? '<span class="text-2xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">⚠️ ناقص</span>' : '');
 
                 html += `
-                    <div onclick="${isOut ? '' : `selectDropdownItem('${p.id}')`}" class="p-2.5 flex justify-between items-center text-xs font-bold transition ${isOut ? 'bg-red-50 text-slate-400 cursor-not-allowed' : 'hover:bg-emerald-50 text-slate-800 cursor-pointer'}">
+                    <div onclick="${isOut ? "playSound('error'); alert('السلعة مخلصة')" : `selectDropdownItem('${p.id}')`}" class="p-2.5 flex justify-between items-center text-xs font-bold transition ${isOut ? 'bg-red-50 text-slate-400 cursor-not-allowed' : 'hover:bg-emerald-50 text-slate-800 cursor-pointer'}">
                         <div class="flex flex-col gap-0.5">
                             <span>${p.productName} ${badge}</span>
                             <span class="text-2xs font-normal text-slate-400">المتوفر بالرف: ${p.quantity} حبة</span>
@@ -533,6 +577,7 @@
 
         window.selectDropdownItem = (id) => {
             addToCart(id);
+            playSound('success');
             document.getElementById('searchBox').value = '';
             document.getElementById('dropdownResults').classList.add('hidden');
             document.getElementById('searchBox').focus();
@@ -553,11 +598,23 @@
                         if (decodedText === lastScannedBarcode && (now - lastScanTime < 2000)) return; 
                         lastScannedBarcode = decodedText;
                         lastScanTime = now;
-                        document.getElementById('searchBox').value = decodedText;
-                        window.handleSearchDropdown();
+                        
+                        const targetProd = allProducts.find(p => p.barcode === decodedText);
+                        if(targetProd) {
+                            if(targetProd.quantity > 0) {
+                                addToCart(targetProd.id);
+                                playSound('success');
+                            } else {
+                                playSound('error');
+                                alert('⚠️ الصنف مخلص تماماً.');
+                            }
+                        } else {
+                            playSound('error'); // باركود غير معرف
+                            alert('⚠️ هذا الباركود غير مسجل في بضائع الدكان مسبقاً.');
+                        }
                     },
                     (err) => {}
-                ).catch(err => { alert("كاميرا الباركود تحتاج إلى صلاحيات."); container.classList.add('hidden'); html5QrcodeScanner = null; });
+                ).catch(err => { alert("كاميرا الباركود تحتاج إلى صلاحيات الكاميرا."); container.classList.add('hidden'); html5QrcodeScanner = null; });
             }
         };
 
@@ -567,7 +624,10 @@
 
             const cartItem = cart.find(item => item.id === id);
             if (cartItem) {
-                if (cartItem.qty >= prod.quantity) return alert('⚠️ تجاوزت المتاح بالرف السحابي.');
+                if (cartItem.qty >= prod.quantity) {
+                    playSound('error');
+                    return alert('⚠️ تجاوزت المتاح بالرف السحابي.');
+                }
                 cartItem.qty += 1;
             } else {
                 cart.push({ id: prod.id, name: prod.productName, price: prod.price, cost: prod.cost, qty: 1 });
@@ -580,7 +640,11 @@
             const prod = allProducts.find(p => p.id === id);
             if (!item || !prod) return;
             item.qty += delta;
-            if(item.qty > prod.quantity) { item.qty = prod.quantity; alert('⚠️ تم الوصول للحد الأقصى بالدكان.'); }
+            if(item.qty > prod.quantity) { 
+                item.qty = prod.quantity; 
+                playSound('error');
+                alert('⚠️ تم الوصول للحد الأقصى بالدكان.'); 
+            }
             if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
             updateCartUI();
         };
@@ -592,28 +656,27 @@
             if(confirm('هل أنت متأكد من تفريغ سلة الفاتورة بالكامل؟')) { cart = []; updateCartUI(); }
         };
 
-        // ميزة تعليق الفاتورة (Hold)
         window.suspendCart = () => {
             if(cart.length === 0) return alert('❌ السلة فارغة، لا يوجد شيء لتعليقه!');
-            if(suspendedCart) return alert('⚠️ هناك فاتورة معلقة مسبقاً، الرجاء معالجتها أولاً أو تصفيتها.');
+            if(suspendedCart) return alert('⚠️ هناك فاتورة معلقة مسبقاً.');
             
             suspendedCart = [...cart];
             cart = [];
             updateCartUI();
             document.getElementById('suspendedCartsBadge').classList.remove('hidden');
-            alert('📥 تم تعليق الفاتورة الحالية بنجاح وحفظها جانباً لمتابعة زبون آخر.');
+            playSound('success');
+            alert('📥 تم تعليق الفاتورة بنجاح لحين مرور زبون آخر.');
         };
 
-        // استدعاء الفاتورة المعلقة (Recall)
         window.recallCart = () => {
             if(!suspendedCart) return;
             cart = [...suspendedCart];
             suspendedCart = null;
             updateCartUI();
             document.getElementById('suspendedCartsBadge').classList.add('hidden');
+            playSound('success');
         };
 
-        // ميزة حاسبة المتبقي النقدية الذكية السريعة
         window.calculateCashChange = () => {
             const currentTotal = parseFloat(document.getElementById('cartTotalSum').innerText) || 0;
             const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
@@ -666,7 +729,6 @@
             listContainer.innerHTML = html;
             subTotalContainer.innerText = subtotal.toFixed(2);
 
-            // حساب الخصومات الفورية (نسبة أو مبلغ)
             const dType = document.getElementById('discountType').value;
             const dVal = parseFloat(document.getElementById('discountValue').value) || 0;
             let finalTotal = subtotal;
@@ -751,7 +813,7 @@
             document.getElementById('printInvDiscount').innerText = discountAmount.toFixed(2);
             document.getElementById('printInvTotal').innerText = finalTotalSum.toFixed(2);
 
-            window.print(); // تفعيل الطباعة الفورية للزبون
+            window.print(); // تفعيل الطباعة الفورية
 
             const profitMade = finalTotalSum - totalCostSum;
             const batch = db.batch();
@@ -785,12 +847,15 @@
 
             batch.commit().then(() => { fetchCustomersDebts(); }).catch(err => console.error(err));
 
+            // الإضافة الذكية: تصفير السلة وإعادة تهيئة الواجهة كلياً للزبون التالي
             cart = [];
             document.getElementById('discountType').value = 'none';
             document.getElementById('discountValue').value = '0';
-            updateCartUI();
+            document.getElementById('cashReceivedInput').value = '';
+            document.getElementById('cashChangeOutput').innerText = "0.00 ر.س";
             document.getElementById('debtCustomerName').value = '';
             updatePaymentUI('كاش');
+            updateCartUI();
         };
 
         function fetchCustomersDebts() {
@@ -828,7 +893,11 @@
             db.collection('customers_debt').doc(customerId).update({
                 outstandingDebt: firebase.firestore.FieldValue.increment(-paidAmount),
                 lastTransaction: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => { alert('✅ تم قيد الدفعة بنجاح!'); fetchCustomersDebts(); });
+            }).then(() => { 
+                playSound('success');
+                alert('✅ تم قيد الدفعة بنجاح في الدفتر!'); 
+                fetchCustomersDebts(); 
+            });
         };
 
         function calculateFinancialReports() {
@@ -877,14 +946,12 @@
                 document.getElementById('netProfit').innerText = profitTotal.toFixed(2);
                 document.getElementById('salesLogTableBody').innerHTML = rowsHtml || '<tr><td colspan="5" class="text-center py-4">لا مبيعات مسجلة.</td></tr>';
 
-                // تجهيز بيانات الطباعة للمدير
                 document.getElementById('repTodaySales').innerText = todayTotal.toFixed(2);
                 document.getElementById('repNetProfit').innerText = profitTotal.toFixed(2);
                 document.getElementById('reportPrintTableBody').innerHTML = printRowsHtml;
             });
         }
 
-        // ميزة طباعة التقارير المالية المعتمدة للمدير
         window.printFinancialReport = () => {
             if(currentUserRole !== 'admin') return alert('⚠️ هذه الميزة مخصصة للمدير العام فقط.');
             document.getElementById('reportPrintDate').innerText = new Date().toLocaleString('ar-SA');
