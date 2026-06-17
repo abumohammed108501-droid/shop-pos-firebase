@@ -3,88 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إضافة صنف جديد - دكان غسق الذكي</title>
+    <title>إضافة البضاعة - دكان غسق</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .form-container { max-width: 600px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 0 auto; border-top: 5px solid #2c3e50; }
-        h2 { margin-top: 0; color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        .btn { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 18px; width: 100%; margin-top: 15px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
+        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; }
+        .nav-btn:hover, .nav-btn.active { background: #007bff; }
+        .form-container { max-width: 700px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        .btn { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 15px; }
         .btn:hover { background: #0056b3; }
-        .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
     </style>
 </head>
 <body>
 
+<div class="nav-bar">
+    <a href="index.html" class="nav-btn">🛒 شاشة البيع</a>
+    <a href="add-product.html" class="nav-btn active">📦 إضافة بضاعة جديدة</a>
+    <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
+    <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
+    <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
+</div>
+
 <div class="form-container">
-    <h2>📦 إدخال صنف جديد للمخزن والرفوف</h2>
-    
-    <form id="productForm">
+    <h2>📦 تسجيل وتكويد صنف جديد في السحاب</h2>
+    <form id="productForm" onsubmit="event.preventDefault();">
         <div class="form-group">
-            <label>اسم الصنف التجاري:</label>
-            <input type="text" id="pName" placeholder="مثال: مياه هنا 330 مل" required>
+            <label>اسم المنتج الفعلي:</label>
+            <input type="text" id="productName" placeholder="مثال: صابون لوكس عبوة صغيرة" required>
         </div>
-
-        <div class="row-grid">
+        <div class="form-row">
             <div class="form-group">
-                <label>باركود الحبة (القطاعي):</label>
-                <input type="text" id="bPiece" placeholder="امسح باركود الحبة..." required>
+                <label>باركود الحبة المفردة:</label>
+                <input type="text" id="barcodePiece" placeholder="امسح باركود الحبة هنا...">
             </div>
             <div class="form-group">
-                <label>باركود الكرتون (الجملة):</label>
-                <input type="text" id="bBox" placeholder="امسح باركود الكرتون..." required>
-            </div>
-        </div>
-
-        <div class="row-grid">
-            <div class="form-group">
-                <label>رقم الرف المخصص له (Shelf):</label>
-                <input type="text" id="shelf" placeholder="مثال: A-03 أو B-12" required>
-            </div>
-            <div class="form-group">
-                <label>معامل التحويل (كم حبة بالكرتون؟):</label>
-                <input type="number" id="boxFactor" placeholder="مثال: 40" value="1" required>
+                <label>باركود الكرتون الكامل:</label>
+                <input type="text" id="barcodeBox" placeholder="امسح باركود الكرتون هنا...">
             </div>
         </div>
-
-        <div class="form-group">
-            <label>سعر تكلفة الحبة الواحدة الحقيقي (ر.س):</label>
-            <input type="number" step="0.01" id="costPiece" placeholder="مثال: 0.50" required>
-        </div>
-
-        <div class="row-grid">
+        <div class="form-row">
             <div class="form-group">
-                <label>سعر بيع الحبة (قطاعي):</label>
-                <input type="number" step="0.01" id="salePiece" placeholder="مثال: 1.00" required>
+                <label>معامل التحويل (الكرتون فيه كم حبة؟):</label>
+                <input type="number" id="boxFactor" value="12" required>
             </div>
             <div class="form-group">
-                <label>سعر بيع الكرتون (جملة):</label>
-                <input type="number" step="0.01" id="saleBox" placeholder="مثال: 35.00" required>
+                <label>موقع الرف في المحل:</label>
+                <input type="text" id="shelfNumber" placeholder="مثال: رف أ-3">
             </div>
         </div>
-
-        <div class="row-grid">
+        <div class="form-row">
             <div class="form-group">
-                <label>الكمية المتوفرة حالياً (بالحبة):</label>
-                <input type="number" id="stockPieces" placeholder="مثال: 400" required>
+                <label>سعر تكلفة (الحبة الواحدة):</label>
+                <input type="number" step="0.01" id="costPricePiece" placeholder="ر.س" required>
             </div>
             <div class="form-group">
-                <label>حد التنبيه الأدنى لنقص المخزن:</label>
-                <input type="number" id="minLevel" placeholder="ينبهك إذا قل عن.. مثال: 10" value="10" required>
+                <label>سعر بيع (الحبة الواحدة):</label>
+                <input type="number" step="0.01" id="salePricePiece" placeholder="ر.س" required>
+            </div>
+            <div class="form-group">
+                <label>سعر بيع (الكرتون كاملاً):</label>
+                <input type="number" step="0.01" id="salePriceBox" placeholder="ر.س" required>
             </div>
         </div>
-
-        <button type="submit" class="btn">حفظ وتصدير الصنف إلى السحابة فوراُ</button>
+        <div class="form-row">
+            <div class="form-group">
+                <label>الكمية الافتتاحية الواصلة للمخزن حالياً (بالحبات):</label>
+                <input type="number" id="currentStock" value="100" required>
+            </div>
+            <div class="form-group">
+                <label>حد الطلب الأدنى للتنبيه بنفاد الصنف:</label>
+                <input type="number" id="minLevel" value="10" required>
+            </div>
+        </div>
+        <button type="button" class="btn" onclick="saveProduct()">💾 حفظ الصنف في قاعدة البيانات السحابية</button>
     </form>
+</div>
+
+<div class="footer">
+    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // بيانات مشروعك الحقيقي الثابتة والآمنة ✅
     const firebaseConfig = {
         apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
         authDomain: "shop-pos-firebase.firebaseapp.com",
@@ -98,42 +106,29 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    document.getElementById('productForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const pName = document.getElementById('pName').value.trim();
-        const bPiece = document.getElementById('bPiece').value.trim();
-        const bBox = document.getElementById('bBox').value.trim();
-        const shelf = document.getElementById('shelf').value.trim();
-        const boxFactor = parseInt(document.getElementById('boxFactor').value);
-        const costPiece = parseFloat(document.getElementById('costPiece').value);
-        const salePiece = parseFloat(document.getElementById('salePiece').value);
-        const saleBox = parseFloat(document.getElementById('saleBox').value);
-        const stockPieces = parseInt(document.getElementById('stockPieces').value);
-        const minLevel = parseInt(document.getElementById('minLevel').value);
+    window.saveProduct = async () => {
+        const pName = document.getElementById('productName').value.trim();
+        if(!pName) return alert("الرجاء تعبئة اسم المنتج!");
 
         try {
-            // رفع البيانات لـ Firebase تحت مجموعة products
             await addDoc(collection(db, "products"), {
                 product_name: pName,
-                barcode_piece: bPiece,
-                barcode_box: bBox,
-                shelf_number: shelf,
-                box_factor: boxFactor,
-                cost_price_piece: costPiece,
-                sale_price_piece: salePiece,
-                sale_price_box: saleBox,
-                current_stock_pieces: stockPieces,
-                min_stock_level: minLevel
+                barcode_piece: document.getElementById('barcodePiece').value.trim(),
+                barcode_box: document.getElementById('barcodeBox').value.trim(),
+                shelf_number: document.getElementById('shelfNumber').value.trim(),
+                box_factor: parseInt(document.getElementById('boxFactor').value) || 1,
+                cost_price_piece: parseFloat(document.getElementById('costPricePiece').value) || 0,
+                sale_price_piece: parseFloat(document.getElementById('salePricePiece').value) || 0,
+                sale_price_box: parseFloat(document.getElementById('salePriceBox').value) || 0,
+                current_stock_pieces: parseInt(document.getElementById('currentStock').value) || 0,
+                min_stock_level: parseInt(document.getElementById('minLevel').value) || 5,
+                created_at: new Date()
             });
 
-            alert(`تم حفظ صنف (${pName}) بنجاح وتوزيع مكانه على الرف ${shelf}!`);
+            alert(`نجح الحفظ السحابي للصنف: (${pName})`);
             document.getElementById('productForm').reset();
-        } catch (error) {
-            console.error("خطأ أثناء حفظ الصنف الحسابي:", error);
-            alert("حدث خلل في الاتصال، تأكد من الشبكة.");
-        }
-    });
+        } catch (e) { alert("حدث خلل أثناء الاتصال بقاعدة البيانات."); }
+    };
 </script>
 </body>
 </html>
