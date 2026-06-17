@@ -3,60 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام كاشير الدكان الذكي - النسخة الشاملة</title>
+    <title>دكان غسق الذكي - شاشة الكاشير</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; }
-        .pos-section { flex: 2; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .cart-section { flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
-        h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
+        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .nav-btn:hover, .nav-btn.active { background: #007bff; }
+        .status-badge { background: #27ae60; color: white; padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .container { display: flex; gap: 20px; max-width: 1400px; margin: 20px auto; padding: 0 15px; flex-wrap: wrap; }
+        .pos-section { flex: 2; min-width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .cart-section { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-        th { background-color: #2c3e50; color: white; }
-        .btn { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        th { background-color: #34495e; color: white; }
+        .btn { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s; }
         .btn:hover { background: #218838; }
-        .btn-danger { background: #dc3545; }
-        .btn-primary { background: #007bff; }
-        .btn-warning { background: #ffc107; color: #212529; }
-        .status-bar { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .online { color: #28a745; }
-        .offline { color: #dc3545; }
-        .summary { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 20px; font-size: 18px; }
-        .total-price { font-size: 24px; font-weight: bold; color: #d9534f; }
+        .btn-danger { background: #dc3545; width: auto; padding: 6px 12px; font-size: 14px; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-primary { background: #007bff; width: auto; height: 46px; }
+        .btn-warning { background: #ffc107; color: #212529; text-decoration: none; display: inline-block; text-align: center; border-radius: 4px; padding: 10px; margin-top: 5px; }
+        .summary { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 18px; border-right: 5px solid #007bff; }
+        .total-price { font-size: 26px; font-weight: bold; color: #dc3545; margin-top: 5px; }
+        .calc-box { background: #fff3cd; padding: 15px; border-radius: 6px; margin-top: 15px; border-right: 5px solid #ffc107; }
         #scanner-container { width: 100%; max-width: 400px; display: none; margin: 10px 0; border: 2px dashed #007bff; }
-        
-        /* تنسيق الفاتورة المخصصة للطباعة */
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; }
-        }
-        #printArea { display: none; background: #fff; padding: 15px; border: 1px dashed #000; width: 280px; font-size: 14px; text-align: center; margin-top: 15px; border-radius: 4px; }
+        #printArea { display: none; background: #fff; padding: 15px; border: 1px dashed #000; width: 100%; max-width: 280px; font-size: 14px; text-align: center; margin-top: 15px; border-radius: 4px; box-sizing: border-box; }
+        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
     </style>
     <script src="https://unpkg.com/@html5-qrcode/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-<div class="status-bar">
-    <div>حالة الشبكة للتزامن: <span id="networkStatus" class="online">جاري التحميل...</span></div>
-    <div>مستودع دكان غسق الذكي - شاشة الكاشير المطور الشامل</div>
+<!-- شريط التنقل العلوي الذكي للراحة الذاتية -->
+<div class="nav-bar">
+    <div class="nav-links">
+        <a href="index.html" class="nav-btn active">🛒 شاشة البيع</a>
+        <a href="add-product.html" class="nav-btn">📦 إضافة بضاعة جديدة</a>
+        <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
+        <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
+        <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
+    </div>
+    <div id="networkStatus" class="status-badge">جاري الاتصال بالسحابة...</div>
 </div>
 
 <div class="container">
     <div class="pos-section">
-        <h2>شاشة البيع السريع (الكاشير)</h2>
+        <h2>🏪 شاشة البيع المباشر (الكاشير السريع)</h2>
         
-        <div class="form-group" style="display: flex; gap: 10px;">
+        <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
             <div style="flex: 1;">
-                <label for="barcodeInput">امسح باركود المادة (حبة أو كرتون):</label>
-                <input type="text" id="barcodeInput" placeholder="ضع المؤشر هنا وامسح الباركود..." autofocus>
+                <label for="barcodeInput">امسح باركود الصنف (حبة / كرتون):</label>
+                <input type="text" id="barcodeInput" placeholder="ضع مؤشر الماوس هنا أو امسح الباركود..." autofocus>
             </div>
-            <div style="display: flex; align-items: flex-end;">
-                <button class="btn btn-primary" id="toggleScannerBtn" style="height: 45px;">📷 تشغيل كاميرا الهاتف</button>
-            </div>
+            <button class="btn btn-primary" id="toggleScannerBtn">📷 كاميرا الهاتف</button>
         </div>
 
         <div id="scanner-container">
@@ -64,12 +67,12 @@
         </div>
 
         <div class="form-group">
-            <label for="searchInput">أو ابحث باسم المنتج سريعاً (في حال تلف الباركود):</label>
-            <input type="text" id="searchInput" placeholder="اكتب اسم المنتج هنا للبحث السريع...">
-            <div id="searchResults" style="background: white; border: 1px solid #ccc; display: none; max-height: 150px; overflow-y: auto;"></div>
+            <label for="searchInput">أو ابحث باسم المنتج سريعاً:</label>
+            <input type="text" id="searchInput" placeholder="اكتب اسم المنتج للبحث الفوري...">
+            <div id="searchResults" style="background: white; border: 1px solid #ccc; display: none; max-height: 200px; overflow-y: auto; position: absolute; width: 50%; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
         </div>
 
-        <h3>الفاتورة الحالية</h3>
+        <h3>📋 الفاتورة المفتوحة حالياً</h3>
         <table id="cartTable">
             <thead>
                 <tr>
@@ -88,17 +91,32 @@
 
     <div class="cart-section">
         <div>
-            <h2>ملخص الحساب</h2>
+            <h2>💰 حساب الفاتورة</h2>
             <div class="summary">
-                <div>إجمالي العناصر: <span id="totalItems">0</span></div>
-                <div class="total-price">المطلوب: <span id="grandTotal">0.00</span> ر.س</div>
+                <div>إجمالي القطع المبيعة: <span id="totalItems" style="font-weight:bold;">0</span></div>
+                <div class="total-price">المطلوب الصافي: <span id="grandTotal">0.00</span> ر.س</div>
+            </div>
+
+            <!-- ميزة حاسبة متبقي النقد الذكية للزبائن -->
+            <div class="calc-box">
+                <label for="cashPaid">المبلغ المدفوع من الزبون (كاش):</label>
+                <input type="number" id="cashPaid" placeholder="مثال: 50 أو 100 ر.س" step="0.01">
+                <div style="margin-top: 10px; font-size: 16px; font-weight: bold;">
+                    باقي النقد للزبون: <span id="cashChange" style="color:#27ae60;">0.00</span> ر.س
+                </div>
             </div>
         </div>
-        <button class="btn" style="width: 100%; padding: 15px; font-size: 18px;" onclick="checkoutInvoice()">تأكيد وقطع الفاتورة</button>
-        
-        <!-- منطقة الفاتورة المخفية المجهزة للطباعة والمشاركة -->
-        <div id="printArea"></div>
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="checkoutInvoice()">✔ تأكيد وقطع الفاتورة</button>
+            <div id="printArea"></div>
+        </div>
     </div>
+</div>
+
+<!-- حفظ الحقوق والاسم رسمياً للمطور عمر يوسف البطحاني -->
+<div class="footer">
+    نظام دكان غسق لإدارة التجزئة المطور والذكي سحابياً <br>
+    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
 </div>
 
 <script type="module">
@@ -130,22 +148,20 @@
         try {
             const context = new (window.AudioContext || window.webkitAudioContext)();
             const osc = context.createOscillator();
-            osc.type = "sine";
-            osc.frequency.value = 800;
+            osc.frequency.value = 850;
             osc.connect(context.destination);
-            osc.start();
-            setTimeout(() => osc.stop(), 100);
+            osc.start(); setTimeout(() => osc.stop(), 80);
         } catch(e){}
     }
 
     const updateNetworkStatus = () => {
         const statusEl = document.getElementById('networkStatus');
         if (navigator.onLine) {
-            statusEl.innerText = "متصل بالسحابة (Online)";
-            statusEl.className = "online";
+            statusEl.innerText = "متصل سحابياً (Online)";
+            statusEl.style.background = "#27ae60";
         } else {
-            statusEl.innerText = "يعمل محلياً دون إنترنت (Offline)";
-            statusEl.className = "offline";
+            statusEl.innerText = "محلي دون إنترنت (Offline)";
+            statusEl.style.background = "#e74c3c";
         }
     };
     window.addEventListener('online', updateNetworkStatus);
@@ -156,12 +172,18 @@
         try {
             const querySnapshot = await getDocs(collection(db, "products"));
             productsDb = [];
-            querySnapshot.forEach((doc) => {
-                productsDb.push({ id: doc.id, ...doc.data() });
-            });
+            querySnapshot.forEach((doc) => { productsDb.push({ id: doc.id, ...doc.data() }); });
         } catch (error) { console.error(error); }
     }
     loadProducts();
+
+    // حاسبة الباقي اللحظية
+    document.getElementById('cashPaid').addEventListener('input', function() {
+        const paid = parseFloat(this.value) || 0;
+        const total = parseFloat(document.getElementById('grandTotal').innerText) || 0;
+        const change = paid - total;
+        document.getElementById('cashChange').innerText = change > 0 ? change.toFixed(2) : "0.00";
+    });
 
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
@@ -174,8 +196,8 @@
         if(filtered.length > 0) {
             filtered.forEach(p => {
                 const div = document.createElement('div');
-                div.style.padding = '10px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
-                div.innerHTML = `📦 <b>${p.product_name}</b> - حبة: ${p.sale_price_piece} ر.س | كرتون: ${p.sale_price_box} ر.س`;
+                div.style.padding = '12px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
+                div.innerHTML = `📦 <b>${p.product_name}</b> - حبة: ${p.sale_price_piece} ر.س | الرف: ${p.shelf_number || '-'}`;
                 div.onclick = () => {
                     addToCart(p, 'piece');
                     searchInput.value = ''; searchResults.style.display = 'none';
@@ -200,18 +222,17 @@
         if (!product) { product = productsDb.find(p => p.barcode_box === barcode); unit = 'box'; }
 
         if (product) { playBeep(); addToCart(product, unit); } 
-        else { alert('هذا الباركود غير مسجل في النظام!'); }
+        else { alert('باركود غير مسجل! توجه لصفحة إضافة بضاعة لتسجيله أولاً.'); }
     }
 
-    const toggleScannerBtn = document.getElementById('toggleScannerBtn');
-    toggleScannerBtn.addEventListener('click', () => {
+    document.getElementById('toggleScannerBtn').addEventListener('click', () => {
         const container = document.getElementById('scanner-container');
         if(container.style.display === 'block') {
             container.style.display = 'none';
             if(html5QrcodeScanner) html5QrcodeScanner.clear();
         } else {
             container.style.display = 'block';
-            html5QrcodeScanner = new Html5QrcodeScanner("interactive", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner = new Html5QrcodeScanner("interactive", { fps: 12, qrbox: 250 });
             html5QrcodeScanner.render((text) => { handleBarcodeScan(text); });
         }
     });
@@ -233,18 +254,23 @@
             grandTotal += itemTotal; totalItems += item.quantity;
             tbody.innerHTML += `
                 <tr>
-                    <td>${item.product.product_name}</td>
+                    <td><b>${item.product.product_name}</b></td>
                     <td>${item.unit === 'piece' ? 'حبة' : 'كرتون'}</td>
                     <td>${item.quantity}</td>
                     <td>${item.price.toFixed(2)} ر.س</td>
-                    <td>${itemTotal.toFixed(2)} ر.س</td>
-                    <td><b style="color: #007bff;">${item.product.shelf_number || 'غير محدد'}</b></td>
+                    <td>${itemTotal.toFixed(2)} ر.s</td>
+                    <td><b style="color:#007bff;">${item.product.shelf_number || '-'}</b></td>
                     <td><button class="btn btn-danger" onclick="window.removeFromCart(${index})">حذف</button></td>
                 </tr>
             `;
         });
         document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
         document.getElementById('totalItems').innerText = totalItems;
+        
+        // تحديث حاسبة الباقي بشكل حي
+        const paid = parseFloat(document.getElementById('cashPaid').value) || 0;
+        const change = paid - grandTotal;
+        document.getElementById('cashChange').innerText = change > 0 ? change.toFixed(2) : "0.00";
     }
 
     window.removeFromCart = (index) => { cart.splice(index, 1); updateCartUi(); };
@@ -254,7 +280,7 @@
         let totalBill = parseFloat(document.getElementById('grandTotal').innerText);
 
         try {
-            let receiptContent = `<h3>دكان غسق الذكي 🏪</h3><p>فاتورة مبيعات تبسيطية</p><hr>`;
+            let receiptContent = `<h3>دكان غسق الذكي 🏪</h3><p>فاتورة مبيعات</p><hr>`;
             let whatsappText = `*فاتورة دكان غسق الذكي 🏪*%0A--------------------%0A`;
 
             for (let item of cart) {
@@ -278,21 +304,23 @@
                 const productRef = doc(db, "products", item.product.id);
                 await updateDoc(productRef, { current_stock_pieces: increment(-piecesDeducted) });
 
-                receiptContent += `<div style="display:flex; justify-content:space-between;"><span>${item.product.product_name} (${item.unit === 'piece' ? 'حبة' : 'كرتون'}) x${item.quantity}</span> <span>${totalRevenue.toFixed(2)} ر.س</span></div>`;
-                whatsappText += `• ${item.product.product_name} [${item.unit === 'piece' ? 'حبة' : 'كرتون'}] x${item.quantity} = ${totalRevenue.toFixed(2)} ر.س%0A`;
+                receiptContent += `<div style="display:flex; justify-content:space-between;"><span>${item.product.product_name} x${item.quantity}</span> <span>${totalRevenue.toFixed(2)} ر.س</span></div>`;
+                whatsappText += `• ${item.product.product_name} x${item.quantity} = ${totalRevenue.toFixed(2)} ر.س%0A`;
             }
 
-            receiptContent += `<hr><h4>المجموع الإجمالي: ${totalBill.toFixed(2)} ر.س</h4><p>شكراً لزيارتكم!</p><button class="btn btn-primary" onclick="window.print()">🖨️ طباعة ورقية</button> `;
-            whatsappText += `--------------------%0A*الإجمالي المطلوب: ${totalBill.toFixed(2)} ر.س*%0Aشكراً لزيارتكم!`;
+            receiptContent += `<hr><h4>المجموع: ${totalBill.toFixed(2)} ر.س</h4><p>شكراً لكم!</p><button class="btn" style="background:#007bff; font-size:14px; padding:6px;" onclick="window.print()">🖨 طباعة</button> `;
+            whatsappText += `--------------------%0A*الإجمالي: ${totalBill.toFixed(2)} ر.س*%0Aشكراً لزيارتكم!`;
             
-            receiptContent += `<a href="https://api.whatsapp.com/send?text=${whatsappText}" target="_blank" class="btn btn-warning" style="display:inline-block; margin-top:5px; text-decoration:none;">💬 إرسال عبر الواتساب</a>`;
+            receiptContent += `<a href="https://api.whatsapp.com/send?text=${whatsappText}" target="_blank" class="btn-warning">💬 واتساب</a>`;
 
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = receiptContent;
             printArea.style.display = 'block';
 
-            alert("تم ترحيل الفاتورة بنجاح وتجهيز خيارات الطباعة والمشاركة بالأسفل.");
+            alert("تم تسجيل وتوثيق الفاتورة بنجاح في السحاب.");
             cart = []; updateCartUi(); loadProducts();
+            document.getElementById('cashPaid').value = '';
+            document.getElementById('cashChange').innerText = "0.00";
         } catch (error) { console.error(error); }
     };
 </script>
