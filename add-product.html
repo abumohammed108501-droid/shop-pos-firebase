@@ -4,65 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إضافة صنف - دكان الخور</title>
-    <!-- تضمين مكتبة Tailwind CSS للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- تضمين مكتبات Firebase الأساسية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col justify-between">
 
-    <!-- شريط الرأس -->
     <header class="bg-blue-600 text-white p-4 shadow-md text-center">
         <h1 class="text-2xl font-bold">دكان الخور</h1>
         <p class="text-sm opacity-90">لوحة إدارة المخزون والبضائع</p>
     </header>
 
-    <!-- نموذج إضافة الصنف -->
     <main class="container mx-auto max-w-lg p-6 my-auto bg-white rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold mb-6 text-gray-700 text-center border-b pb-2">إضافة صنف جديد للمخزن</h2>
-        
         <form id="productForm" class="space-y-4">
             <div>
                 <label class="block text-gray-600 font-medium mb-1">باركود الصنف (اختياري)</label>
-                <input type="text" id="barcode" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="امسح الباركود أو اكتبه">
+                <input type="text" id="barcode" class="w-full p-2.5 border rounded-md" placeholder="امسح الباركود">
             </div>
-
             <div>
-                <label class="block text-gray-600 font-medium mb-1">اسم الصنف / الدواء</label>
-                <input type="text" id="productName" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="مثال: بندول، صابون، إلخ">
+                <label class="block text-gray-600 font-medium mb-1">اسم الصنف</label>
+                <input type="text" id="productName" required class="w-full p-2.5 border rounded-md" placeholder="مثال: صابون، حليب">
             </div>
-
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1">سعر البيع (ريال)</label>
-                    <input type="number" step="0.01" id="price" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="0.00">
+                    <label class="block text-gray-600 font-medium mb-1">سعر البيع</label>
+                    <input type="number" step="0.01" id="price" required class="w-full p-2.5 border rounded-md" placeholder="0.00">
                 </div>
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1">الكمية المتوفرة</label>
-                    <input type="number" id="quantity" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="1">
+                    <label class="block text-gray-600 font-medium mb-1">الكمية</label>
+                    <input type="number" id="quantity" required class="w-full p-2.5 border rounded-md" placeholder="1">
                 </div>
             </div>
-
-            <div>
-                <label class="block text-gray-600 font-medium mb-1">حد التنبيه للكمية (إشعار بنقص الصنف)</label>
-                <input type="number" id="alertLimit" value="5" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none">
-            </div>
-
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200 shadow-md">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition">
                 حفظ الصنف في قاعدة البيانات السحابية
             </button>
         </form>
     </main>
 
-    <!-- تذييل الصفحة بالبيانات الجديدة للمدير -->
     <footer class="bg-gray-800 text-gray-400 text-center py-3 text-xs">
         <p>المدير المسؤول: علي محمد الفالح آل النابت | هاتف: 0548468541</p>
-        <p class="mt-1">&copy; 2026 نظام إدارة دكان الخور الذكي</p>
     </footer>
 
     <script>
-        // تكوين الـ Firebase الخاص بمشروعك (تأكد أن بيانات الـ config متطابقة مع مشروعك الحالي)
         const firebaseConfig = {
             apiKey: "AIzaSy...", 
             authDomain: "ghasaq-system.firebaseapp.com",
@@ -71,38 +55,22 @@
             messagingSenderId: "123456789",
             appId: "1:1234:web:abcd"
         };
-
-        // تفعيل الفايربيس والاستدعاء
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // منطق إرسال البيانات وحفظها سحابياً
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const barcode = document.getElementById('barcode').value.trim();
-            const productName = document.getElementById('productName').value.trim();
-            const price = parseFloat(document.getElementById('price').value);
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const alertLimit = parseInt(document.getElementById('alertLimit').value);
-
             try {
                 await db.collection('products').add({
-                    barcode: barcode || null,
-                    productName: productName,
-                    price: price,
-                    quantity: quantity,
-                    alertLimit: alertLimit,
+                    barcode: document.getElementById('barcode').value.trim() || null,
+                    productName: document.getElementById('productName').value.trim(),
+                    price: parseFloat(document.getElementById('price').value),
+                    quantity: parseInt(document.getElementById('quantity').value),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
-                alert('✅ نجح الحفظ السحابي للصنف في دكان الخور!');
+                alert('✅ نجح الحفظ في دكان الخور!');
                 document.getElementById('productForm').reset();
-                document.getElementById('alertLimit').value = "5";
             } catch (error) {
-                console.error("Error adding document: ", error);
                 alert('❌ فشل الحفظ: ' + error.message);
             }
         });
