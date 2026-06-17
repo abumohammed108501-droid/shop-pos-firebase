@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دكان الخور - إدخال وتوريد البضائع</title>
+    <title>دكان الخور - مخزن البضائع اللوجستي</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <!-- مكتبة كشف الباركود المحدثة -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         body { font-family: 'Tajawal', sans-serif; background-color: #f1f5f9; }
@@ -16,69 +16,73 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
-    <header class="bg-slate-900 text-white p-4 shadow-md text-center">
-        <h1 class="text-2xl font-bold text-blue-500">مخزن dukan al-khor السحابي</h1>
-        <p class="text-xs text-slate-400 mt-1">توريد، جرد، وزيادة كميات الرفوف الذكية</p>
+    <header class="bg-slate-900 text-white p-3 shadow-md text-center">
+        <h1 class="text-xl font-black text-blue-500"><i class="fa-solid fa-boxes-stacked ml-1.5"></i>مخزن دكان الخور السحابي</h1>
+        <p class="text-2xs text-slate-400 mt-0.5">لوحة التحكم السحابية الموحدة وتوريد الرفوف الذكية</p>
     </header>
 
     <main class="container mx-auto p-4 max-w-xl flex-grow flex flex-col justify-center">
-        <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h2 class="text-lg font-bold text-slate-700">📋 نموذج توريد صنف جديد/موجود</h2>
-                <a href="index.html" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold px-3 py-1.5 rounded-lg transition">⬅️ شاشة الكاشير</a>
+        <div class="bg-white p-5 rounded-2xl shadow-xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 class="text-sm font-bold text-slate-700"><i class="fa-solid fa-square-plus text-blue-500 ml-1"></i> نموذج توريد / زيادة كمية صنف</h2>
+                <button onclick="backToPOS()" class="text-2xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold px-3 py-1.5 rounded-lg transition">⬅️ شاشة الكاشير</button>
             </div>
 
             <div class="text-center">
-                <button type="button" onclick="toggleAddScanner()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2">
-                    📷 تشغيل الكاميرا الخلفية لقراءة الباركود
+                <button type="button" onclick="toggleAddScanner()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-camera"></i> تشغيل الكاميرا المحدثة لقراءة الباركود بدون تكرار
                 </button>
-                <div id="add-reader-container" class="hidden mt-3 bg-slate-50 p-3 rounded-xl border">
+                <div id="add-reader-container" class="hidden mt-3 bg-slate-50 p-2 rounded-xl border">
                     <div id="add-reader" class="mx-auto max-w-xs overflow-hidden rounded-lg"></div>
                 </div>
             </div>
 
-            <form id="productForm" class="space-y-4 text-right">
-                <div>
-                    <label class="block text-slate-600 text-xs font-bold mb-1">رقم الباركود:</label>
-                    <input type="text" id="barcode" placeholder="امسح بالباركود أو اتركه فارغاً" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+            <form id="productForm" class="space-y-3.5 text-right">
+                <div class="relative">
+                    <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-barcode ml-1"></i> رقم باركود السلعة:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="barcode" placeholder="امسح بالباركد أو اكتبه يدوياً" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
+                        <button type="button" onclick="clearBarcodeAndInputs()" class="bg-slate-100 hover:bg-slate-200 font-bold text-2xs px-3 rounded-lg text-slate-600" title="مسح الخانات للبدء من جديد">جديد</button>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-slate-600 text-xs font-bold mb-1">اسم الصنف / السلعة:</label>
-                    <input type="text" id="productName" required placeholder="مثال: عصير، صابون" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-tag ml-1"></i> اسم الصنف / السلعة:</label>
+                    <input type="text" id="productName" required placeholder="مثال: دجاج ساديا، صابون تايد" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-slate-600 text-xs font-bold mb-1">الرف / التصنيف السلعي:</label>
-                        <input type="text" id="category" required placeholder="مثال: ألبان، منظفات" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                        <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-folder ml-1"></i> الرف / التصنيف:</label>
+                        <input type="text" id="category" required placeholder="مثال: مجمدات، منظفات" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-slate-600 text-xs font-bold mb-1">الكمية الجديدة الموردة:</label>
-                        <input type="number" id="quantity" required min="1" placeholder="مثال: 50" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                        <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-circle-plus ml-1"></i> الكمية الموردة الجديدة:</label>
+                        <input type="number" id="quantity" required min="1" placeholder="مثال: 24" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-slate-600 text-xs font-bold mb-1">سعر التكلفة (للحبة):</label>
-                        <input type="number" step="0.01" id="costPrice" required placeholder="0.00" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                        <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-money-bill-1-wave ml-1"></i> سعر التكلفة (للحبة):</label>
+                        <input type="number" step="0.01" id="costPrice" required placeholder="0.00 ر.س" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-slate-600 text-xs font-bold mb-1">سعر البيع للجمهور (للحبة):</label>
-                        <input type="number" step="0.01" id="price" required placeholder="0.00" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                        <label class="block text-slate-600 text-2xs font-bold mb-1"><i class="fa-solid fa-basket-shopping ml-1"></i> سعر البيع للجمهور:</label>
+                        <input type="number" step="0.01" id="price" required placeholder="0.00 ر.س" class="w-full p-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-base shadow transition">
-                    📥 توريد وحفظ الصنف في المخزن السحابي
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> حفظ وتوريد فوري للرفوف السحابية
                 </button>
             </form>
         </div>
     </main>
 
-    <footer class="bg-slate-900 text-slate-500 text-center py-2 text-2xs font-medium">
-        دكان الخور - لوحة التحكم اللوجستية الموحدة لعام 2026 م
+    <footer class="bg-slate-900 text-slate-500 text-center py-2 text-2xs font-bold flex flex-col sm:flex-row justify-between items-center px-4 gap-1">
+        <div><i class="fa-solid fa-cubes text-blue-500"></i> البرمجة والتشغيل الذكي: نظام غسق الموحد v2.0</div>
+        <div>حقوق الطبع محفوظة لدكان الخور 2026 م</div>
     </footer>
 
     <script>
@@ -95,6 +99,16 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let addQrcodeScanner = null;
+        let lastScannedAddBarcode = "";
+        let lastAddScanTime = 0;
+
+        window.backToPOS = () => { window.location.href = "index.html"; };
+
+        window.clearBarcodeAndInputs = () => {
+            document.getElementById('productForm').reset();
+            document.getElementById('barcode').value = "";
+            lastScannedAddBarcode = "";
+        };
 
         window.toggleAddScanner = () => {
             const container = document.getElementById('add-reader-container');
@@ -108,9 +122,14 @@
                 container.classList.remove('hidden');
                 addQrcodeScanner = new Html5Qrcode("add-reader");
                 addQrcodeScanner.start(
-                    { facingMode: "environment" }, // تشغيل الكاميرا الخلفية إجبارياً
-                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    { facingMode: "environment" }, 
+                    { fps: 15, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true },
                     async (decodedText) => {
+                        const now = Date.now();
+                        if (decodedText === lastScannedAddBarcode && (now - lastAddScanTime < 2000)) return; 
+                        lastScannedAddBarcode = decodedText;
+                        lastAddScanTime = now;
+
                         document.getElementById('barcode').value = decodedText;
                         window.toggleAddScanner();
                         
@@ -122,12 +141,12 @@
                             document.getElementById('category').value = data.category || 'عام';
                             document.getElementById('costPrice').value = data.costPrice || data.purchase_price_piece || '';
                             document.getElementById('price').value = data.price || data.sale_price_piece || '';
-                            alert('🔍 تم التعرف على الصنف تلقائياً بسجلات دكان الخور! أدخل الكمية الإضافية الموردة.');
+                            alert('🔍 تم العثور على الصنف في الرفوف! أدخل الكمية الجديدة وسيتم دمجها تلقائياً.');
                         }
                     },
                     (err) => {}
                 ).catch(err => {
-                    alert("يرجى التحقق من إعطاء صلاحية الكاميرا للمتصفح.");
+                    alert("يرجى إعطاء صلاحية الكاميرا للمتصفح.");
                     container.classList.add('hidden');
                     addQrcodeScanner = null;
                 });
@@ -163,7 +182,7 @@
                         price: price,
                         category: category
                     });
-                    alert(`📥 تم دمج الكمية بنجاح! المخزون السحابي الكلي الحالي: ${currentQty + inputQty} حبة.`);
+                    alert(`✅ تم تحديث ودمج الصنف! المخزون الكلي الحالي بالرف: ${currentQty + inputQty} حبة.`);
                 } else {
                     await db.collection('products').add({
                         barcode: barcode || "",
@@ -174,12 +193,12 @@
                         price: price,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    alert('✨ نجح تسجيل وتوريد الصنف الجديد كلياً في رفوف دكان الخور!');
+                    alert('✨ تم تسجيل وتوريد الصنف الجديد كلياً في مخزن دكان الخور!');
                 }
 
-                document.getElementById('productForm').reset();
+                clearBarcodeAndInputs();
             } catch (err) {
-                alert('❌ فشل حفظ المورد السحابي: ' + err.message);
+                alert('❌ فشل حفظ التوريد السحابي: ' + err.message);
             }
         });
     </script>
