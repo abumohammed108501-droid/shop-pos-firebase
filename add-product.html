@@ -3,136 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إضافة البضاعة - دكان غسق</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
-        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; }
-        .nav-btn:hover, .nav-btn.active { background: #007bff; }
-        .form-container { max-width: 700px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 200px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        .btn { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 15px; }
-        .btn:hover { background: #0056b3; }
-        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
-    </style>
+    <title>إضافة صنف - دكان الخور</title>
+    <!-- تضمين مكتبة Tailwind CSS للتصميم -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- تضمين مكتبات Firebase الأساسية -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen flex flex-col justify-between">
 
-<div class="nav-bar">
-    <a href="index.html" class="nav-btn">🛒 شاشة البيع</a>
-    <a href="add-product.html" class="nav-btn active">📦 إضافة بضاعة جديدة</a>
-    <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
-    <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
-    <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
-</div>
+    <!-- شريط الرأس -->
+    <header class="bg-blue-600 text-white p-4 shadow-md text-center">
+        <h1 class="text-2xl font-bold">دكان الخور</h1>
+        <p class="text-sm opacity-90">لوحة إدارة المخزون والبضائع</p>
+    </header>
 
-<div class="form-container">
-    <h2>📦 تسجيل وتكويد صنف جديد في السحاب</h2>
-    <form id="productForm" onsubmit="event.preventDefault();">
-        <div class="form-group">
-            <label>اسم المنتج الفعلي:</label>
-            <input type="text" id="productName" placeholder="مثال: صابون لوكس عبوة صغيرة" required>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>باركود الحبة المفردة:</label>
-                <input type="text" id="barcodePiece" placeholder="امسح باركود الحبة هنا...">
+    <!-- نموذج إضافة الصنف -->
+    <main class="container mx-auto max-w-lg p-6 my-auto bg-white rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-6 text-gray-700 text-center border-b pb-2">إضافة صنف جديد للمخزن</h2>
+        
+        <form id="productForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-600 font-medium mb-1">باركود الصنف (اختياري)</label>
+                <input type="text" id="barcode" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="امسح الباركود أو اكتبه">
             </div>
-            <div class="form-group">
-                <label>باركود الكرتون الكامل:</label>
-                <input type="text" id="barcodeBox" placeholder="امسح باركود الكرتون هنا...">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>معامل التحويل (الكرتون فيه كم حبة؟):</label>
-                <input type="number" id="boxFactor" value="12" required>
-            </div>
-            <div class="form-group">
-                <label>موقع الرف في المحل:</label>
-                <input type="text" id="shelfNumber" placeholder="مثال: رف أ-3">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>سعر تكلفة (الحبة الواحدة):</label>
-                <input type="number" step="0.01" id="costPricePiece" placeholder="ر.س" required>
-            </div>
-            <div class="form-group">
-                <label>سعر بيع (الحبة الواحدة):</label>
-                <input type="number" step="0.01" id="salePricePiece" placeholder="ر.س" required>
-            </div>
-            <div class="form-group">
-                <label>سعر بيع (الكرتون كاملاً):</label>
-                <input type="number" step="0.01" id="salePriceBox" placeholder="ر.س" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>الكمية الافتتاحية الواصلة للمخزن حالياً (بالحبات):</label>
-                <input type="number" id="currentStock" value="100" required>
-            </div>
-            <div class="form-group">
-                <label>حد الطلب الأدنى للتنبيه بنفاد الصنف:</label>
-                <input type="number" id="minLevel" value="10" required>
-            </div>
-        </div>
-        <button type="button" class="btn" onclick="saveProduct()">💾 حفظ الصنف في قاعدة البيانات السحابية</button>
-    </form>
-</div>
 
-<div class="footer">
-    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
-</div>
+            <div>
+                <label class="block text-gray-600 font-medium mb-1">اسم الصنف / الدواء</label>
+                <input type="text" id="productName" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="مثال: بندول، صابون، إلخ">
+            </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-600 font-medium mb-1">سعر البيع (ريال)</label>
+                    <input type="number" step="0.01" id="price" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="0.00">
+                </div>
+                <div>
+                    <label class="block text-gray-600 font-medium mb-1">الكمية المتوفرة</label>
+                    <input type="number" id="quantity" required class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="1">
+                </div>
+            </div>
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
-        authDomain: "shop-pos-firebase.firebaseapp.com",
-        projectId: "shop-pos-firebase",
-        storageBucket: "shop-pos-firebase.firebasestorage.app",
-        messagingSenderId: "970725406691",
-        appId: "1:970725406691:web:a1f769d0f11357423c52d6",
-        measurementId: "G-KR4RSBW9D5"
-    };
+            <div>
+                <label class="block text-gray-600 font-medium mb-1">حد التنبيه للكمية (إشعار بنقص الصنف)</label>
+                <input type="number" id="alertLimit" value="5" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none">
+            </div>
 
-    const app = initializeApp(firebaseConfig);
-    // تم هنا إصلاح استدعاء قاعدة البيانات المباشر لتفعيل الحفظ فوراً
-    const db = getFirestore(app);
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200 shadow-md">
+                حفظ الصنف في قاعدة البيانات السحابية
+            </button>
+        </form>
+    </main>
 
-    window.saveProduct = async () => {
-        const pName = document.getElementById('productName').value.trim();
-        if(!pName) return alert("الرجاء تعبئة اسم المنتج!");
+    <!-- تذييل الصفحة بالبيانات الجديدة للمدير -->
+    <footer class="bg-gray-800 text-gray-400 text-center py-3 text-xs">
+        <p>المدير المسؤول: علي محمد الفالح آل النابت | هاتف: 0548468541</p>
+        <p class="mt-1">&copy; 2026 نظام إدارة دكان الخور الذكي</p>
+    </footer>
 
-        try {
-            await addDoc(collection(db, "products"), {
-                product_name: pName,
-                barcode_piece: document.getElementById('barcodePiece').value.trim(),
-                barcode_box: document.getElementById('barcodeBox').value.trim(),
-                shelf_number: document.getElementById('shelfNumber').value.trim(),
-                box_factor: parseInt(document.getElementById('boxFactor').value) || 1,
-                cost_price_piece: parseFloat(document.getElementById('costPricePiece').value) || 0,
-                sale_price_piece: parseFloat(document.getElementById('salePricePiece').value) || 0,
-                sale_price_box: parseFloat(document.getElementById('salePriceBox').value) || 0,
-                current_stock_pieces: parseInt(document.getElementById('currentStock').value) || 0,
-                min_stock_level: parseInt(document.getElementById('minLevel').value) || 5,
-                created_at: new Date()
-            });
+    <script>
+        // تكوين الـ Firebase الخاص بمشروعك (تأكد أن بيانات الـ config متطابقة مع مشروعك الحالي)
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            authDomain: "ghasaq-system.firebaseapp.com",
+            projectId: "ghasaq-system",
+            storageBucket: "ghasaq-system.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:1234:web:abcd"
+        };
 
-            alert(`نجح الحفظ السحابي للصنف: (${pName})`);
-            document.getElementById('productForm').reset();
-        } catch (e) { 
-            console.error(e);
-            alert("حدث خلل أثناء الاتصال بقاعدة البيانات، تأكد من اتصال الإنترنت."); 
+        // تفعيل الفايربيس والاستدعاء
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-    };
-</script>
+        const db = firebase.firestore();
+
+        // منطق إرسال البيانات وحفظها سحابياً
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const barcode = document.getElementById('barcode').value.trim();
+            const productName = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('price').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const alertLimit = parseInt(document.getElementById('alertLimit').value);
+
+            try {
+                await db.collection('products').add({
+                    barcode: barcode || null,
+                    productName: productName,
+                    price: price,
+                    quantity: quantity,
+                    alertLimit: alertLimit,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('✅ نجح الحفظ السحابي للصنف في دكان الخور!');
+                document.getElementById('productForm').reset();
+                document.getElementById('alertLimit').value = "5";
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        });
+    </script>
 </body>
 </html>
