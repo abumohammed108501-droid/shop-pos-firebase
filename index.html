@@ -7,10 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://unpkg.com/@html5-qrcode/html5-qrcode"></script>
+    <!-- مكتبة كشف الباركود المحدثة -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
         body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
+        
+        /* تحسين الفاتورة لمنع التشوه عند التكبير (حروف حادة وعالية الدقة) */
+        #invoicePrintArea {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.4;
+        }
+        
         @media print {
             body * { visibility: hidden; }
             #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
@@ -20,6 +31,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
+    <!-- شريط الرأس العلوي -->
     <header class="bg-slate-900 text-white shadow-xl">
         <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="text-center sm:text-right">
@@ -40,31 +52,33 @@
         </div>
     </header>
 
+    <!-- المحتوى الرئيسي -->
     <main class="container mx-auto p-4 flex-grow">
         
+        <!-- قسم شاشة البيع المباشر -->
         <div id="pos-tab" class="tab-content flex flex-col lg:flex-row gap-6">
             <div class="w-full lg:w-2/3 flex flex-col gap-4">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 items-center">
                     <input type="text" id="searchBox" oninput="filterPOSProducts()" placeholder="ابحث باسم الصنف أو امسح الباركود مباشرة..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base">
-                    <button onclick="toggleScanner('pos-scanner')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition whitespace-nowrap">
+                    <button onclick="togglePOSScanner()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition whitespace-nowrap">
                         📷 كاميرا الباركود للبيع
                     </button>
                 </div>
 
-                <div id="pos-scanner-container" class="hidden bg-white p-4 rounded-xl shadow-inner border text-center">
-                    <div id="pos-scanner" class="mx-auto max-w-sm rounded-lg overflow-hidden"></div>
-                    <button onclick="toggleScanner('pos-scanner')" class="mt-2 text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold">إغلاق الكاميرا</button>
+                <!-- قارئ الكاميرا مع إصلاح تفعيل العدسة الخلفية بالجوال -->
+                <div id="pos-reader-container" class="hidden bg-white p-4 rounded-xl shadow-inner border text-center">
+                    <div id="pos-reader" class="mx-auto max-w-sm rounded-lg overflow-hidden"></div>
+                    <button onclick="togglePOSScanner()" class="mt-3 text-xs bg-red-100 text-red-600 px-4 py-1.5 rounded-full font-bold">إغلاق الكاميرا</button>
                 </div>
 
-                <div id="categoryShelves" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                     <h3 class="text-sm font-bold text-slate-500 mb-3">الرفوف والتصنيفات المتاحة:</h3>
-                    <div id="shelvesContainer" class="flex flex-wrap gap-2">
-                        </div>
-                    <div id="posProductsGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
-                        </div>
+                    <div id="shelvesContainer" class="flex flex-wrap gap-2"></div>
+                    <div id="posProductsGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 mt-4"></div>
                 </div>
             </div>
 
+            <!-- السلة وطرق الدفع -->
             <div class="w-full lg:w-1/3 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-fit min-h-[500px]">
                 <div>
                     <h2 class="text-lg font-bold text-slate-800 border-b pb-3 flex justify-between items-center">
@@ -106,6 +120,7 @@
             </div>
         </div>
 
+        <!-- قسم الأرباح والتقارير المالية -->
         <div id="reports-tab" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-xl shadow">
@@ -142,38 +157,38 @@
                 </div>
             </div>
         </div>
-
     </main>
 
-    <div id="invoicePrintArea" class="hidden bg-white p-4 text-black text-xs" style="font-family: 'Courier New', monospace; width: 72mm; margin: auto;">
-        <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 8px;">
-            <h2 style="font-size: 20px; margin: 0 0 4px 0; font-weight: bold;">دكان الخور</h2>
-            <p style="margin: 2px 0;">المدير: علي محمد الفالح آل النابت</p>
-            <p style="margin: 2px 0;">هاتف الإدارة: 0548468541</p>
-            <p style="margin: 2px 0;">الكاشير: عمر البطحاني</p>
+    <!-- منطقة الفاتورة الحرارية المعالجة ضد التشوه والغبش عند التكبير -->
+    <div id="invoicePrintArea" class="hidden bg-white p-6 text-slate-900" style="max-width: 450px; margin: auto; font-size: 15px;">
+        <div style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 12px; margin-bottom: 12px;">
+            <h2 style="font-size: 26px; margin: 0 0 6px 0; font-weight: 900; color: #000;">دكان الخور</h2>
+            <p style="margin: 4px 0; font-weight: 700;">المدير: علي محمد الفالح آل النابت</p>
+            <p style="margin: 4px 0;">هاتف الإدارة: 0548468541</p>
+            <p style="margin: 4px 0; font-weight: 700;">الكاشير: عمر البطحاني</p>
         </div>
-        <div style="margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px; font-size: 11px;">
-            <div><strong>رقم الفاتورة:</strong> #<span id="printInvNumber"></span></div>
-            <div><strong>نوع العمليـة:</strong> <span id="printInvType"></span></div>
+        <div style="margin-bottom: 12px; border-bottom: 2px dashed #000; padding-bottom: 12px; font-size: 14px; font-weight: 500; space-y-1;">
+            <div><strong>رقم الفاتورة:</strong> #<span id="printInvNumber" style="font-weight: 700;"></span></div>
+            <div><strong>نوع العمليـة:</strong> <span id="printInvType" style="font-weight: 700;"></span></div>
             <div><strong>التاريخ والوقت:</strong> <span id="printInvDateTime"></span></div>
         </div>
-        <table style="width: 100%; text-align: right; border-collapse: collapse; margin-bottom: 8px;">
+        <table style="w-full; text-align: right; border-collapse: collapse; margin-bottom: 12px; width: 100%; font-size: 14px;">
             <thead>
-                <tr style="border-bottom: 1px solid #000;">
-                    <th style="padding-bottom: 3px;">الصنف</th>
-                    <th style="text-align: center; padding-bottom: 3px;">الكمية</th>
-                    <th style="text-align: left; padding-bottom: 3px;">الإجمالي</th>
+                <tr style="border-bottom: 2px solid #000; font-weight: 700;">
+                    <th style="padding-bottom: 6px;">الصنف</th>
+                    <th style="text-align: center; padding-bottom: 6px;">الكمية</th>
+                    <th style="text-align: left; padding-bottom: 6px;">الإجمالي</th>
                 </tr>
             </thead>
-            <tbody id="printInvItemsBody"></tbody>
+            <tbody id="printInvItemsBody" style="font-weight: 500;"></tbody>
         </table>
-        <div style="border-top: 1px dashed #000; padding-top: 6px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between;">
+        <div style="border-top: 2px dashed #000; padding-top: 10px; font-size: 18px; font-weight: 900; display: flex; justify-content: space-between; color: #000;">
             <span>المجموع النهائي:</span>
             <span><span id="printInvTotal">0.00</span> ر.س</span>
         </div>
-        <div style="text-align: center; margin-top: 20px; font-size: 10px; border-top: 1px solid #000; padding-top: 6px;">
+        <div style="text-align: center; margin-top: 30px; font-size: 12px; border-top: 1px solid #000; padding-top: 10px; font-weight: 700;">
             <p style="margin: 0;">شكراً لتعاملكم معنا وزيارتكم دكان الخور</p>
-            <p style="margin: 3px 0 0 0; color: #666;">نظام إدارة غسق الذكي الموحد 2026م</p>
+            <p style="margin: 4px 0 0 0; color: #555; font-weight: 400;">نظام إدارة غسق الذكي الموحد 2026م</p>
         </div>
     </div>
 
@@ -182,7 +197,6 @@
     </footer>
 
     <script>
-        // إعدادات وبيانات الاتصال بقاعدة بيانات الفايربيس السحابية المستقرة الحقيقية لدكانك
         const firebaseConfig = {
             apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
             authDomain: "shop-pos-firebase.firebaseapp.com",
@@ -193,16 +207,14 @@
             measurementId: "G-KR4RSBW9D5"
         };
 
-        // تفعيل المشروع
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         let allProducts = [];
         let cart = [];
-        let activeScanner = null;
+        let html5QrcodeScanner = null;
         let selectedCategory = "الكل";
 
-        // الجلب اللحظي والمستمر للبضائع والمخزون الحقيقي من السحاب
         db.collection('products').onSnapshot(snapshot => {
             allProducts = [];
             let categories = new Set();
@@ -222,11 +234,8 @@
             renderCategoryShelves(Array.from(categories));
             renderPOSGrid();
             calculateFinancialReports();
-        }, error => {
-            console.error("Firebase Snapshot Error: ", error);
         });
 
-        // بناء أزرار الرفوف والتصنيفات تلقائياً
         function renderCategoryShelves(categories) {
             const container = document.getElementById('shelvesContainer');
             let html = `<button onclick="filterCategory('الكل')" class="px-3 py-1.5 text-xs font-bold rounded-full transition ${selectedCategory === 'الكل' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">🌟 الكل (${allProducts.length})</button>`;
@@ -244,7 +253,6 @@
             renderCategoryShelves(categories);
         };
 
-        // عرض البضائع في شبكة البيع حسب الرف المختار والبحث
         function renderPOSGrid(filteredList = null) {
             const container = document.getElementById('posProductsGrid');
             let list = filteredList ? filteredList : allProducts;
@@ -269,7 +277,6 @@
                         </div>
                         <div class="flex justify-between items-center w-full mt-2">
                             <span class="text-emerald-600 font-black text-base">${p.price.toFixed(2)} <span class="text-2xs">ر.س</span></span>
-                            ${outOfStock ? '<span class="text-3xs bg-red-600 text-white px-1.5 py-0.5 rounded">منتهي</span>' : ''}
                         </div>
                     </button>
                 `;
@@ -277,8 +284,7 @@
             container.innerHTML = html;
         }
 
-        // تصفية وقراءة خانة البحث
-        window.filterProducts = window.filterPOSProducts = () => {
+        window.filterPOSProducts = () => {
             const query = document.getElementById('searchBox').value.toLowerCase().trim();
             if(!query) { renderPOSGrid(); return; }
             const exactBarcodeMatch = allProducts.find(p => p.barcode === query);
@@ -292,7 +298,35 @@
             renderPOSGrid(filtered);
         };
 
-        // إضافة البضائع إلى سلة المبيعات
+        // إصلاح تفعيل الكاميرا الخلفية الإجباري للجوالات الذكية بدلاً من التعليق
+        window.togglePOSScanner = () => {
+            const container = document.getElementById('pos-reader-container');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                    container.classList.add('hidden');
+                }).catch(err => console.log(err));
+            } else {
+                container.classList.remove('hidden');
+                html5QrcodeScanner = new Html5Qrcode("pos-reader");
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, // إجبار الكاميرا الخلفية
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        document.getElementById('searchBox').value = decodedText;
+                        window.filterPOSProducts();
+                        window.togglePOSScanner(); // إغلاق تلقائي بعد الالتقاط بنجاح
+                    },
+                    (errorMessage) => { /* تجنب ملء السجلات بالأخطاء المؤقتة */ }
+                ).catch(err => {
+                    alert("لم يتم العثور على كاميرا خلفية نشطة أو يرجى منح إذن الوصول للكاميرا بالمتصفح.");
+                    container.classList.add('hidden');
+                    html5QrcodeScanner = null;
+                });
+            }
+        };
+
         window.addToCart = (id) => {
             const prod = allProducts.find(p => p.id === id);
             if (!prod || prod.quantity <= 0) return;
@@ -374,7 +408,6 @@
             }
         };
 
-        // إتمام عملية البيع: نقص المخزون سحابياً وحفظ الفاتورة
         window.processCheckout = async () => {
             if (cart.length === 0) return alert('السلة فارغة تماماً يا كاشير!');
             
@@ -387,7 +420,6 @@
             }
 
             try {
-                // 1. توليد الرقم التسلسلي التصاعدي
                 let currentSerial = localStorage.getItem('khor_invoice_serial') || 1000;
                 let nextSerial = parseInt(currentSerial) + 1;
                 localStorage.setItem('khor_invoice_serial', nextSerial);
@@ -398,7 +430,6 @@
 
                 const batch = db.batch();
 
-                // 2. معالجة العناصر ونقص كميات المخزن سحابياً فوراً
                 for (const item of cart) {
                     const productRef = db.collection('products').doc(item.id);
                     const freshProd = allProducts.find(p => p.id === item.id);
@@ -418,7 +449,6 @@
 
                 const profitMade = totalSalesSum - totalCostSum;
 
-                // 3. كتابة وحفظ الفاتورة السحابية في المبيعات
                 const invoiceData = {
                     invoiceId: nextSerial,
                     date: firebase.firestore.FieldValue.serverTimestamp(),
@@ -435,34 +465,31 @@
 
                 await batch.commit();
 
-                // 4. تعبئة شاشة الطباعة والتشغيل الفوري للمتصفح
+                // طباعة فورية عالية الوضوح وعميقة البكسل
                 document.getElementById('printInvNumber').innerText = nextSerial;
                 document.getElementById('printInvType').innerText = pMethod === 'دين' ? `آجل (دين لـ ${customerName})` : "نقداً (كاش)";
                 document.getElementById('printInvDateTime').innerText = new Date().toLocaleString('ar-SA');
                 
                 let printRows = '';
                 invoiceItems.forEach(i => {
-                    printRows += `<tr><td style="padding:4px 0;">${i.name}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:left;">${i.subtotal.toFixed(2)}</td></tr>`;
+                    printRows += `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: 700; color:#000;">${i.name}</td><td style="text-align:center; font-weight: 700;">${i.qty}</td><td style="text-align:left; font-weight: 700;">${i.subtotal.toFixed(2)}</td></tr>`;
                 });
                 document.getElementById('printInvItemsBody').innerHTML = printRows;
                 document.getElementById('printInvTotal').innerText = totalSalesSum.toFixed(2);
 
                 window.print();
 
-                // تفريغ السلة وتصفير المدخلات
                 cart = [];
                 updateCartUI();
                 document.getElementById('debtCustomerName').value = '';
                 updatePaymentUI('كاش');
-                alert(`✅ تم حفظ وترحيل الفاتورة #${nextSerial} ونقص المخزون بنجاح!`);
+                alert(`✅ تم حفظ وترحيل الفاتورة #${nextSerial} بنجاح!`);
 
             } catch (err) {
-                console.error(err);
                 alert('❌ فشل إتمام العملية السحابية: ' + err.message);
             }
         };
 
-        // معالجة وحساب الإحصائيات المالية والأرباح التلقائية
         function calculateFinancialReports() {
             db.collection('sales').get().then(snapshot => {
                 let todayTotal = 0;
@@ -479,22 +506,13 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const fDate = data.date ? data.date.toDate() : new Date(data.timestamp);
-                    
                     salesList.push({ ...data, fDate });
 
-                    // احتساب مبيعات اليوم
-                    if (fDate.toDateString() === todayStr) {
-                        todayTotal += data.totalAmount;
-                    }
-                    // احتساب مبيعات الشهر
-                    if (fDate.getMonth() === currentMonth && fDate.getFullYear() === currentYear) {
-                        monthTotal += data.totalAmount;
-                    }
-                    // إجمالي الأرباح المتراكمة للمدير
+                    if (fDate.toDateString() === todayStr) todayTotal += data.totalAmount;
+                    if (fDate.getMonth() === currentMonth && fDate.getFullYear() === currentYear) monthTotal += data.totalAmount;
                     profitTotal += data.netProfit || 0;
                 });
 
-                // ترتيب عرض السجل من الأحدث للأقدم
                 salesList.sort((a,b) => b.timestamp - a.timestamp);
                 salesList.slice(0, 15).forEach(s => {
                     rowsHtml += `
@@ -515,26 +533,6 @@
             });
         }
 
-        // دالة تفعيل الكاميرا لقراءة الباركود للبيع المباشر
-        window.toggleScanner = (elementId) => {
-            const container = document.getElementById(elementId + '-container');
-            if (activeScanner) {
-                activeScanner.clear();
-                activeScanner = null;
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
-                activeScanner = new Html5QrcodeScanner(elementId, { fps: 15, qrbox: 250 });
-                activeScanner.render((text) => {
-                    document.getElementById('searchBox').value = text;
-                    window.filterPOSProducts();
-                    // إغلاق الكاميرا تلقائياً بعد الالتقاط الناجح لتسهيل الحركة
-                    toggleScanner(elementId);
-                }, (err) => {});
-            }
-        };
-
-        // دالة التبديل بين الشاشات واللوحات الرئيسية
         window.switchTab = (tabId) => {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
