@@ -3,326 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دكان غسق الذكي - شاشة الكاشير</title>
+    <title>دكان الخور - شاشة البيع</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }
-        .nav-bar { background-color: #2c3e50; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-btn { background: #34495e; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 15px; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .nav-btn:hover, .nav-btn.active { background: #007bff; }
-        .status-badge { background: #27ae60; color: white; padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .container { display: flex; gap: 20px; max-width: 1400px; margin: 20px auto; padding: 0 15px; flex-wrap: wrap; }
-        .pos-section { flex: 2; min-width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .cart-section { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
-        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-        th { background-color: #34495e; color: white; }
-        .btn { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn:hover { background: #218838; }
-        .btn-danger { background: #dc3545; width: auto; padding: 6px 12px; font-size: 14px; }
-        .btn-danger:hover { background: #c82333; }
-        .btn-primary { background: #007bff; width: auto; height: 46px; }
-        .btn-warning { background: #ffc107; color: #212529; text-decoration: none; display: inline-block; text-align: center; border-radius: 4px; padding: 10px; margin-top: 5px; }
-        .summary { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 18px; border-right: 5px solid #007bff; }
-        .total-price { font-size: 26px; font-weight: bold; color: #dc3545; margin-top: 5px; }
-        .calc-box { background: #fff3cd; padding: 15px; border-radius: 6px; margin-top: 15px; border-right: 5px solid #ffc107; }
-        #scanner-container { width: 100%; max-width: 400px; display: none; margin: 10px 0; border: 2px dashed #007bff; }
-        #printArea { display: none; background: #fff; padding: 15px; border: 1px dashed #000; width: 100%; max-width: 280px; font-size: 14px; text-align: center; margin-top: 15px; border-radius: 4px; box-sizing: border-box; }
-        .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 14px; border-top: 1px solid #ddd; margin-top: 40px; background: #fff; font-weight: 500; }
+        @media print {
+            body * { visibility: hidden; }
+            #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
+            #invoicePrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
-    <script src="https://unpkg.com/@html5-qrcode/html5-qrcode" type="text/javascript"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
-<!-- شريط التنقل العلوي الذكي للراحة الذاتية -->
-<div class="nav-bar">
-    <div class="nav-links">
-        <a href="index.html" class="nav-btn active">🛒 شاشة البيع</a>
-        <a href="add-product.html" class="nav-btn">📦 إضافة بضاعة جديدة</a>
-        <a href="inventory.html" class="nav-btn">📊 جرد المخزون</a>
-        <a href="customers.html" class="nav-btn">👥 دفتر الديون</a>
-        <a href="dashboard.html" class="nav-btn">📈 الإحصائيات والمالية</a>
-    </div>
-    <div id="networkStatus" class="status-badge">جاري الاتصال بالسحابة...</div>
-</div>
-
-<div class="container">
-    <div class="pos-section">
-        <h2>🏪 شاشة البيع المباشر (الكاشير السريع)</h2>
-        
-        <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
-            <div style="flex: 1;">
-                <label for="barcodeInput">امسح باركود الصنف (حبة / كرتون):</label>
-                <input type="text" id="barcodeInput" placeholder="ضع مؤشر الماوس هنا أو امسح الباركود..." autofocus>
-            </div>
-            <button class="btn btn-primary" id="toggleScannerBtn">📷 كاميرا الهاتف</button>
-        </div>
-
-        <div id="scanner-container">
-            <div id="interactive" style="width: 100%;"></div>
-        </div>
-
-        <div class="form-group">
-            <label for="searchInput">أو ابحث باسم المنتج سريعاً:</label>
-            <input type="text" id="searchInput" placeholder="اكتب اسم المنتج للبحث الفوري...">
-            <div id="searchResults" style="background: white; border: 1px solid #ccc; display: none; max-height: 200px; overflow-y: auto; position: absolute; width: 50%; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
-        </div>
-
-        <h3>📋 الفاتورة المفتوحة حالياً</h3>
-        <table id="cartTable">
-            <thead>
-                <tr>
-                    <th>الصنف</th>
-                    <th>الوحدة</th>
-                    <th>الكمية</th>
-                    <th>سعر الوحدة</th>
-                    <th>الإجمالي</th>
-                    <th>الرف</th>
-                    <th>إجراء</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="cart-section">
+    <!-- الرأسية بالأسماء الجديدة -->
+    <header class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
         <div>
-            <h2>💰 حساب الفاتورة</h2>
-            <div class="summary">
-                <div>إجمالي القطع المبيعة: <span id="totalItems" style="font-weight:bold;">0</span></div>
-                <div class="total-price">المطلوب الصافي: <span id="grandTotal">0.00</span> ر.س</div>
-            </div>
+            <h1 class="text-2xl font-bold">دكان الخور</h1>
+            <p class="text-xs opacity-90">نظام المبيعات السريع</p>
+        </div>
+        <div class="text-left text-xs bg-green-800 p-2 rounded">
+            <p>المدير: علي محمد الفالح</p>
+            <p>الكاشير: عمر البطحاني</p>
+        </div>
+    </header>
 
-            <!-- ميزة حاسبة متبقي النقد الذكية للزبائن -->
-            <div class="calc-box">
-                <label for="cashPaid">المبلغ المدفوع من الزبون (كاش):</label>
-                <input type="number" id="cashPaid" placeholder="مثال: 50 أو 100 ر.س" step="0.01">
-                <div style="margin-top: 10px; font-size: 16px; font-weight: bold;">
-                    باقي النقد للزبون: <span id="cashChange" style="color:#27ae60;">0.00</span> ر.س
+    <!-- محتوى شاشة البيع -->
+    <main class="container mx-auto p-4 flex flex-col md:flex-row gap-4 flex-grow">
+        <!-- قسم المواد -->
+        <div class="w-full md:w-2/3 bg-white p-4 rounded-lg shadow-md">
+            <input type="text" id="searchBox" placeholder="ابحث باسم الصنف أو امسح الباركود..." class="w-full p-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-500">
+            <div id="productsList" class="grid grid-cols-2 gap-3">
+                <!-- جلب الأصناف سحابياً يتم هنا -->
+                <p class="text-gray-400 text-sm">جاري جلب البضائع من قاعدة بيانات دكان الخور...</p>
+            </div>
+        </div>
+
+        <!-- السلة -->
+        <div class="w-full md:w-1/3 bg-white p-4 rounded-lg shadow-md flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">سلة المشتريات</h2>
+                <div id="cartItems" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+                    <p class="text-gray-400 text-center text-sm">السلة فارغة</p>
                 </div>
             </div>
+            <div class="border-t pt-4">
+                <div class="flex justify-between items-center mb-4 font-bold text-xl text-gray-800">
+                    <span>الإجمالي:</span>
+                    <span><span id="cartTotal">0.00</span> ريال</span>
+                </div>
+                <button onclick="checkoutAndPrint()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition shadow-md">
+                    حفظ وإصدار الفاتورة
+                </button>
+            </div>
         </div>
-        <div style="margin-top: 20px;">
-            <button class="btn" onclick="checkoutInvoice()">✔ تأكيد وقطع الفاتورة</button>
-            <div id="printArea"></div>
+    </main>
+
+    <!-- ====== الفاتورة المجهزة للطباعة التلقائية ====== -->
+    <div id="invoicePrintArea" class="hidden bg-white p-4 text-black text-sm" style="font-family: 'Courier New', monospace; width: 80mm; margin: auto;">
+        <div class="text-center border-b pb-2 mb-2">
+            <h2 class="text-xl font-bold" style="font-size: 20px; margin-bottom: 2px;">دكان الخور</h2>
+            <p style="font-size: 11px; margin: 2px 0;">المالك/المدير: علي محمد الفالح آل النابت</p>
+            <p style="font-size: 11px; margin: 2px 0;">هاتف المدير: 0548468541</p>
+            <p style="font-size: 11px; margin: 2px 0;">اسم الكاشير: عمر البطحاني</p>
+        </div>
+        
+        <div class="mb-2" style="font-size: 12px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+            <p><strong>رقم الفاتورة:</strong> <span id="invNumber"></span></p>
+            <p><strong>التاريخ:</strong> <span id="invDateTime"></span></p>
+        </div>
+
+        <table class="w-full text-right mb-2" style="font-size: 12px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000;">
+                    <th>الصنف</th>
+                    <th class="text-center">الكمية</th>
+                    <th class="text-left">السعر</th>
+                </tr>
+            </thead>
+            <tbody id="invItemsBody"></tbody>
+        </table>
+
+        <div class="border-t pt-2" style="font-size: 14px; font-weight: bold; border-top: 1px dashed #000;">
+            <div class="flex justify-between">
+                <span>المجموع الكلي:</span>
+                <span><span id="invTotal">0.00</span> ريال</span>
+            </div>
+        </div>
+
+        <div class="text-center border-t mt-4 pt-2" style="font-size: 10px; border-top: 1px solid #000;">
+            <p>شكراً لزيارتكم دكان الخور</p>
         </div>
     </div>
-</div>
 
-<!-- حفظ الحقوق والاسم رسمياً للمطور عمر يوسف البطحاني -->
-<div class="footer">
-    نظام دكان غسق لإدارة التجزئة المطور والذكي سحابياً <br>
-    تطوير وتصميم: عمر يوسف البطحاني © ٢٠٢٦ م
-</div>
+    <footer class="bg-gray-800 text-gray-400 text-center py-2 text-xs">
+        <p>المالك: علي محمد الفالح آل النابت | كاشير: عمر البطحاني</p>
+    </footer>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { 
-        getFirestore, collection, getDocs, addDoc, doc, updateDoc, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoLitsuyvUgV4Jq2YtV2Ng2xnocFIiksk",
-        authDomain: "shop-pos-firebase.firebaseapp.com",
-        projectId: "shop-pos-firebase",
-        storageBucket: "shop-pos-firebase.firebasestorage.app",
-        messagingSenderId: "970725406691",
-        appId: "1:970725406691:web:a1f769d0f11357423c52d6",
-        measurementId: "G-KR4RSBW9D5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app, {
-        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
-
-    let productsDb = [];
-    let cart = [];
-    let html5QrcodeScanner = null;
-
-    function playBeep() {
-        try {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator();
-            osc.frequency.value = 850;
-            osc.connect(context.destination);
-            osc.start(); setTimeout(() => osc.stop(), 80);
-        } catch(e){}
-    }
-
-    const updateNetworkStatus = () => {
-        const statusEl = document.getElementById('networkStatus');
-        if (navigator.onLine) {
-            statusEl.innerText = "متصل سحابياً (Online)";
-            statusEl.style.background = "#27ae60";
-        } else {
-            statusEl.innerText = "محلي دون إنترنت (Offline)";
-            statusEl.style.background = "#e74c3c";
-        }
-    };
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-    updateNetworkStatus();
-
-    async function loadProducts() {
-        try {
-            const querySnapshot = await getDocs(collection(db, "products"));
-            productsDb = [];
-            querySnapshot.forEach((doc) => { productsDb.push({ id: doc.id, ...doc.data() }); });
-        } catch (error) { console.error(error); }
-    }
-    loadProducts();
-
-    // حاسبة الباقي اللحظية
-    document.getElementById('cashPaid').addEventListener('input', function() {
-        const paid = parseFloat(this.value) || 0;
-        const total = parseFloat(document.getElementById('grandTotal').innerText) || 0;
-        const change = paid - total;
-        document.getElementById('cashChange').innerText = change > 0 ? change.toFixed(2) : "0.00";
-    });
-
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim().toLowerCase();
-        if(!query) { searchResults.style.display = 'none'; return; }
+    <script>
+        // إعدادات السلة والترقيم التلقائي الفوري
+        let cart = [];
         
-        const filtered = productsDb.filter(p => p.product_name.toLowerCase().includes(query));
-        searchResults.innerHTML = '';
-        if(filtered.length > 0) {
-            filtered.forEach(p => {
-                const div = document.createElement('div');
-                div.style.padding = '12px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
-                div.innerHTML = `📦 <b>${p.product_name}</b> - حبة: ${p.sale_price_piece} ر.س | الرف: ${p.shelf_number || '-'}`;
-                div.onclick = () => {
-                    addToCart(p, 'piece');
-                    searchInput.value = ''; searchResults.style.display = 'none';
-                };
-                searchResults.appendChild(div);
+        // ربط قاعدة البيانات Firestore
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            authDomain: "ghasaq-system.firebaseapp.com",
+            projectId: "ghasaq-system",
+            storageBucket: "ghasaq-system.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:1234:web:abcd"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // جلب الأصناف وعرضها في دكان الخور
+        db.collection('products').onSnapshot(snapshot => {
+            const listContainer = document.getElementById('productsList');
+            let html = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                html += `
+                    <button onclick="addToCart('${data.productName}', ${data.price})" class="p-3 bg-gray-100 hover:bg-green-50 rounded-md border text-right font-medium">
+                        ${data.productName}
+                        <span class="block text-xs text-green-600 font-bold">${data.price.toFixed(2)} ريال</span>
+                    </button>
+                `;
             });
-            searchResults.style.display = 'block';
-        } else { searchResults.style.display = 'none'; }
-    });
-
-    const barcodeInput = document.getElementById('barcodeInput');
-    barcodeInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const barcode = this.value.trim();
-            if(barcode) { handleBarcodeScan(barcode); this.value = ''; }
-        }
-    });
-
-    function handleBarcodeScan(barcode) {
-        let product = productsDb.find(p => p.barcode_piece === barcode);
-        let unit = 'piece';
-        if (!product) { product = productsDb.find(p => p.barcode_box === barcode); unit = 'box'; }
-
-        if (product) { playBeep(); addToCart(product, unit); } 
-        else { alert('باركود غير مسجل! توجه لصفحة إضافة بضاعة لتسجيله أولاً.'); }
-    }
-
-    document.getElementById('toggleScannerBtn').addEventListener('click', () => {
-        const container = document.getElementById('scanner-container');
-        if(container.style.display === 'block') {
-            container.style.display = 'none';
-            if(html5QrcodeScanner) html5QrcodeScanner.clear();
-        } else {
-            container.style.display = 'block';
-            html5QrcodeScanner = new Html5QrcodeScanner("interactive", { fps: 12, qrbox: 250 });
-            html5QrcodeScanner.render((text) => { handleBarcodeScan(text); });
-        }
-    });
-
-    function addToCart(product, unit) {
-        const cartIndex = cart.findIndex(item => item.product.id === product.id && item.unit === unit);
-        const price = unit === 'piece' ? product.sale_price_piece : product.sale_price_box;
-        if (cartIndex > -1) { cart[cartIndex].quantity += 1; } 
-        else { cart.push({ product, unit, quantity: 1, price }); }
-        updateCartUi();
-    }
-
-    function updateCartUi() {
-        const tbody = document.querySelector('#cartTable tbody');
-        tbody.innerHTML = ''; let grandTotal = 0; let totalItems = 0;
-
-        cart.forEach((item, index) => {
-            const itemTotal = item.price * item.quantity;
-            grandTotal += itemTotal; totalItems += item.quantity;
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${item.product.product_name}</b></td>
-                    <td>${item.unit === 'piece' ? 'حبة' : 'كرتون'}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.price.toFixed(2)} ر.س</td>
-                    <td>${itemTotal.toFixed(2)} ر.s</td>
-                    <td><b style="color:#007bff;">${item.product.shelf_number || '-'}</b></td>
-                    <td><button class="btn btn-danger" onclick="window.removeFromCart(${index})">حذف</button></td>
-                </tr>
-            `;
+            listContainer.innerHTML = html || '<p class="col-span-2 text-center text-gray-400">لا توجد بضائع متوفرة، أضف بضائع أولاً</p>';
         });
-        document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
-        document.getElementById('totalItems').innerText = totalItems;
-        
-        // تحديث حاسبة الباقي بشكل حي
-        const paid = parseFloat(document.getElementById('cashPaid').value) || 0;
-        const change = paid - grandTotal;
-        document.getElementById('cashChange').innerText = change > 0 ? change.toFixed(2) : "0.00";
-    }
 
-    window.removeFromCart = (index) => { cart.splice(index, 1); updateCartUi(); };
+        function addToCart(name, price) {
+            const item = cart.find(i => i.name === name);
+            if (item) { item.qty += 1; } else { cart.push({ name, price, qty: 1 }); }
+            updateCartUI();
+        }
 
-    window.checkoutInvoice = async () => {
-        if(cart.length === 0) return alert("السلة فارغة!");
-        let totalBill = parseFloat(document.getElementById('grandTotal').innerText);
-
-        try {
-            let receiptContent = `<h3>دكان غسق الذكي 🏪</h3><p>فاتورة مبيعات</p><hr>`;
-            let whatsappText = `*فاتورة دكان غسق الذكي 🏪*%0A--------------------%0A`;
-
-            for (let item of cart) {
-                let piecesDeducted = item.unit === 'piece' ? item.quantity : (item.quantity * item.product.box_factor);
-                let totalCost = piecesDeducted * item.product.cost_price_piece;
-                let totalRevenue = item.price * item.quantity;
-                let netProfit = totalRevenue - totalCost;
-
-                await addDoc(collection(db, "inventory_transactions"), {
-                    product_id: item.product.id,
-                    product_name: item.product.product_name,
-                    transaction_type: 'sale',
-                    unit_used: item.unit,
-                    quantity_changed: piecesDeducted,
-                    total_cost: totalCost,
-                    total_revenue: totalRevenue,
-                    net_profit: netProfit,
-                    created_at: new Date()
-                });
-
-                const productRef = doc(db, "products", item.product.id);
-                await updateDoc(productRef, { current_stock_pieces: increment(-piecesDeducted) });
-
-                receiptContent += `<div style="display:flex; justify-content:space-between;"><span>${item.product.product_name} x${item.quantity}</span> <span>${totalRevenue.toFixed(2)} ر.س</span></div>`;
-                whatsappText += `• ${item.product.product_name} x${item.quantity} = ${totalRevenue.toFixed(2)} ر.س%0A`;
+        function updateCartUI() {
+            const container = document.getElementById('cartItems');
+            const totalContainer = document.getElementById('cartTotal');
+            if(cart.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center text-sm">السلة فارغة</p>';
+                totalContainer.innerText = "0.00";
+                return;
             }
+            let html = '', total = 0;
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                html += `<div class="flex justify-between bg-gray-100 p-2 rounded text-sm"><span>${item.name} (${item.qty})</span><strong>${sub.toFixed(2)}</strong></div>`;
+            });
+            container.innerHTML = html;
+            totalContainer.innerText = total.toFixed(2);
+        }
 
-            receiptContent += `<hr><h4>المجموع: ${totalBill.toFixed(2)} ر.س</h4><p>شكراً لكم!</p><button class="btn" style="background:#007bff; font-size:14px; padding:6px;" onclick="window.print()">🖨 طباعة</button> `;
-            whatsappText += `--------------------%0A*الإجمالي: ${totalBill.toFixed(2)} ر.س*%0Aشكراً لزيارتكم!`;
+        function checkoutAndPrint() {
+            if (cart.length === 0) return alert('السلة فارغة!');
             
-            receiptContent += `<a href="https://api.whatsapp.com/send?text=${whatsappText}" target="_blank" class="btn-warning">💬 واتساب</a>`;
+            // الترقيم التسلسلي التلقائي المخزن بذاكرة المتصفح
+            let lastNum = localStorage.getItem('dokan_khor_inv') || 1000;
+            let nextNum = parseInt(lastNum) + 1;
+            localStorage.setItem('dokan_khor_inv', nextNum);
 
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = receiptContent;
-            printArea.style.display = 'block';
+            document.getElementById('invNumber').innerText = nextNum;
+            document.getElementById('invDateTime').innerText = new Date().toLocaleString('ar-SA');
 
-            alert("تم تسجيل وتوثيق الفاتورة بنجاح في السحاب.");
-            cart = []; updateCartUi(); loadProducts();
-            document.getElementById('cashPaid').value = '';
-            document.getElementById('cashChange').innerText = "0.00";
-        } catch (error) { console.error(error); }
-    };
-</script>
+            let rows = '', total = 0;
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                rows += `<tr><td>${item.name}</td><td class="text-center">${item.qty}</td><td class="text-left">${sub.toFixed(2)}</td></tr>`;
+            });
+
+            document.getElementById('invItemsBody').innerHTML = rows;
+            document.getElementById('invTotal').innerText = total.toFixed(2);
+
+            window.print();
+            cart = [];
+            updateCartUI();
+        }
+    </script>
 </body>
 </html>
